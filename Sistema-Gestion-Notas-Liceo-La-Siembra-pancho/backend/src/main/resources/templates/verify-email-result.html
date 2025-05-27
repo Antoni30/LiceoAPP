@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Verificación de Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; /* quitar márgenes por defecto */
+            padding: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center; /* centra horizontal */
+            align-items: center;    /* centra vertical */
+            height: 100vh;          /* altura viewport */
+            width: 100vw;
+            box-sizing: content-box;
+        }
+        .message {
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 1.5em;
+            color: white;
+        }
+        .success {
+            background-color: #28a745; /* verde */
+        }
+        .error {
+            background-color: #dc3545; /* rojo */
+        }
+    </style>
+</head>
+<body>
+<div th:class="${success} ? 'message success' : 'message error'">
+    <p th:text="${message}">Mensaje</p>
+</div>
+</body>
+</html>
