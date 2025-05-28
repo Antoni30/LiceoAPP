@@ -280,6 +280,15 @@ function Dashboard() {
                   >
                     {anio.estado === 'Activo' ? 'Desactivar' : 'Activar'}
                   </button>
+
+                  <button 
+                    onClick={() => navigate(`/cursos/${anio.id}`)} 
+                    className="px-3 py-1 text-sm text-red-600 hover:text-red-900"
+                  >
+                    Cursos
+                  </button>
+
+
                 </div>
               </div>
             ))}

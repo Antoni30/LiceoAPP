@@ -10,6 +10,8 @@ import EditarUsuario from "./Pages/EditUser";
 import AsignarRolUsuario from "./Pages/EditRoles";
 import AgregarAnio from "./Pages/NuevoAnio";
 import Materias from "./Pages/Materias";
+import CursosPorAnio from "./Pages/Cursos";
+import MateriasDelCurso from "./Pages/MateriaCurso";
 
 function App() {
   return (
@@ -76,6 +78,24 @@ function App() {
               </ProtectedRoute>
             }
           />
+           <Route
+            path="/cursos/:idanio"
+            element={
+              <ProtectedRoute>
+                <CursosPorAnio/>
+              </ProtectedRoute>
+            }
+          />
+
+           <Route
+            path="/cursos/materia/:idCurso"
+            element={
+              <ProtectedRoute>
+                <MateriasDelCurso/>
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
