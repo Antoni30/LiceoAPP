@@ -41,8 +41,20 @@ public class AuthController {
     }
 
     @PostMapping("/verify-mfa")
-    public MfaVerificationResponse verifyMfaCode(@RequestBody MfaVerificationRequest request) {
-        return authService.verifyMfaCode(request);
+    public MfaVerificationResponse verifyMfaCode(@RequestBody MfaVerificationRequest request,  HttpServletResponse response) {
+        MfaVerificationResponse verificationResponse = authService.verifyMfaCode(request);
+
+        if (verificationResponse.isSuccess() && verificationResponse.getToken() != null) {
+            // Configura la cookie igual que en el login
+            Cookie cookie = new Cookie("token", verificationResponse.getToken());
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true); // Recomendado para producción (HTTPS)
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60); // 1 día - ajusta según necesidades
+            response.addCookie(cookie);
+        }
+
+        return verificationResponse;
     }
 
     @PostMapping("/resend-verification-email")
