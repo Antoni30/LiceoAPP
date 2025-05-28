@@ -66,7 +66,7 @@ export default function Usuarios() {
       case 2:
         return "Profesor";
       case 3:
-        return "Representante";
+        return "Estudiante";
       default:
         return "S/R";
     }

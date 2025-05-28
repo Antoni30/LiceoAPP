@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
+import VerificationModal from "./VerificationModal";
 
 function Login() {
   const { setIsAuthenticated } = useAuth();
   const [idUsuario, setIdUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [message, setMessage] = useState("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -26,7 +28,10 @@ function Login() {
       setIsAuthenticated(true);
       navigate("/dashboard");
     } else {
-      setMessage("Error en login: " + data.message);
+      setMessage(data.message);
+      if (data.message.includes("código de verificación")) {
+        setShowVerificationModal(true);
+      }
     }
   };
 
@@ -92,6 +97,18 @@ function Login() {
           >
             <p className="text-sm">{message}</p>
           </div>
+        )}
+
+        {/* Modal de verificación */}
+        {showVerificationModal && (
+          <VerificationModal
+            idUsuario={idUsuario}
+            onClose={() => setShowVerificationModal(false)}
+            onSuccess={() => {
+              setIsAuthenticated(true);
+              navigate("/dashboard");
+            }}
+          />
         )}
       </div>
     </div>

@@ -8,6 +8,8 @@ import UsuarioCrear from "./Pages/UsuarioNuevo";
 import { AuthProvider } from "./hooks/AuthProvider";
 import EditarUsuario from "./Pages/EditUser";
 import AsignarRolUsuario from "./Pages/EditRoles";
+import AgregarAnio from "./Pages/NuevoAnio";
+import Materias from "./Pages/Materias";
 
 function App() {
   return (
@@ -55,6 +57,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AsignarRolUsuario />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/agregarAnio"
+            element={
+              <ProtectedRoute>
+                <AgregarAnio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/materias"
+            element={
+              <ProtectedRoute>
+                <Materias />
               </ProtectedRoute>
             }
           />

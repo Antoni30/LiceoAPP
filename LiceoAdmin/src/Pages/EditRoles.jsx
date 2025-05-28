@@ -77,19 +77,7 @@ export default function AsignarRolUsuario() {
     }
 
     try {
-   
-      // Asignar el nuevo rol
-      const asignarRolResponse = await fetch('http://localhost:8080/api/usuarios-roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          idUsuario: idUsuario,
-          idRol: parseInt(rolSeleccionado)
-        })
-      });
-
-         // Eliminar el primer rol actual
+      // Eliminar el primer rol actual
       if (rolesAsignados.length > 0) {
         const rolAEliminar = rolesAsignados[0].idRol;
         const eliminarRolResponse = await fetch(`http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}/rol/${rolAEliminar}`, {
@@ -102,6 +90,16 @@ export default function AsignarRolUsuario() {
         }
       }
 
+      // Asignar el nuevo rol
+      const asignarRolResponse = await fetch('http://localhost:8080/api/usuarios-roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          idUsuario: idUsuario,
+          idRol: parseInt(rolSeleccionado)
+        })
+      });
 
       if (!asignarRolResponse.ok) {
         const errData = await asignarRolResponse.json();
