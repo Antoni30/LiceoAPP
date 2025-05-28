@@ -40,7 +40,7 @@ public class Curso {
      * - nullable: false → todo curso debe tener nombre.
      * - length: 15 → longitud máxima permitida para el nombre.
      */
-    @Column(name = "NOMBRE_CURSO", nullable = false, length = 15)
+    @Column(name = "NOMBRE_CURSO", nullable = false, length = 15, unique = true)
     private String nombreCurso;
 
     /**
