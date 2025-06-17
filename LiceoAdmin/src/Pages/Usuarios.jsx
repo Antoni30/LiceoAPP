@@ -44,7 +44,6 @@ export default function Usuarios() {
         if (response.ok) {
           const rolesData = await response.json();
           if (rolesData.length > 0) {
-            // Tomamos solo el primer rol (puedes ajustar esto según tus necesidades)
             rolesMap[user.idUsuario] = rolesData[0].idRol;
           }
         }

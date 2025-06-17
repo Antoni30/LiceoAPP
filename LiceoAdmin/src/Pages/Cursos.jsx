@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Nabvar";
@@ -321,11 +322,11 @@ function CursosPorAnio() {
 
                                 <button
                                   onClick={() =>
-                                    navigate(`/estudiantes`)
+                                    navigate(`/participantes/${curso.id}`)
                                   }
                                   className="text-amber-600 hover:text-amber-900"
                                 >
-                                  Estudiantes
+                                  Participantes
                                 </button>
                               </>
                             )}
