@@ -1,13 +1,24 @@
-import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
+import { Navigate, Outlet } from "react-router-dom";
+import LoadingSpinner from "./LoadingSpinner";
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+const ProtectedRoute = ({ allowedRoles, redirectPath = '/no-autorizado' }) => {
+  const { isAuthenticated, userRole, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />; // redirige al login si no está autenticado
+    return <Navigate to="/" replace />;
   }
-  return children; // si está autenticado, muestra el componente hijo
-}
+
+
+  if (allowedRoles && !allowedRoles.includes(userRole?.toLowerCase())) {
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return <Outlet />;
+};
 
 export default ProtectedRoute;

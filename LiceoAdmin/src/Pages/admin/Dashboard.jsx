@@ -1,6 +1,6 @@
-import Navbar from "../components/Nabvar";
+import Navbar from "../../components/Nabvar";
 import { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/AuthProvider';
+import { useAuth } from '../../hooks/AuthProvider';
 import {  useNavigate } from "react-router-dom";
 
 function Dashboard() {

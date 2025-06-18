@@ -2,103 +2,63 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./components/Login";
-import Dashboard from "./Pages/Dashboard";
-import Usuarios from "./Pages/Usuarios";
-import UsuarioCrear from "./Pages/UsuarioNuevo";
+import Dashboard from "./Pages/admin/Dashboard";
+import Usuarios from "./Pages/admin/Usuarios";
+import UsuarioCrear from "./Pages/admin/UsuarioNuevo";
 import { AuthProvider } from "./hooks/AuthProvider";
-import EditarUsuario from "./Pages/EditUser";
-import AsignarRolUsuario from "./Pages/EditRoles";
-import AgregarAnio from "./Pages/NuevoAnio";
-import Materias from "./Pages/Materias";
-import CursosPorAnio from "./Pages/Cursos";
-import MateriasDelCurso from "./Pages/MateriaCurso";
+import EditarUsuario from "./Pages/admin/EditUser";
+import AsignarRolUsuario from "./Pages/admin/EditRoles";
+import AgregarAnio from "./Pages/admin/NuevoAnio";
+import Materias from "./Pages/admin/Materias";
+import CursosPorAnio from "./Pages/admin/Cursos";
+import MateriasDelCurso from "./Pages/admin/MateriaCurso";
+import Participantes from "./Pages/admin/Participantes";
+import ProfesorPerfil from "./Pages/profesor/ProfesorPerfil";
+import NoAutorizado from "./Pages/NoAutorizado";
+import Home from "./Pages/Home";
 
 function App() {
   return (
+     <BrowserRouter>
     <AuthProvider>
-      <BrowserRouter>
+  
         <Routes>
+          {/* Rutas públicas */}
           <Route path="/" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/usuarios"
-            element={
-              <ProtectedRoute>
-                <Usuarios />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/no-autorizado" element={<NoAutorizado />} />
+          
+          {/* Rutas para cualquier usuario autenticado */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/home" element={<Home />} />
+          </Route>
 
-           <Route
-            path="/usuario/nuevo"
-            element={
-              <ProtectedRoute>
-                <UsuarioCrear />
-              </ProtectedRoute>
-            }
-          />
+          {/* Rutas solo para administradores */}
+          <Route element={<ProtectedRoute allowedRoles={['administrador']} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/usuario/nuevo" element={<UsuarioCrear />} />
+            <Route path="/usuario/editar/:id" element={<EditarUsuario />} />
+            <Route path="/usuario/asignarRol/:idUsuario" element={<AsignarRolUsuario />} />
+            <Route path="/agregarAnio" element={<AgregarAnio />} />
+            <Route path="/materias" element={<Materias />} />
+            <Route path="/cursos/:idanio" element={<CursosPorAnio />} />
+            <Route path="/cursos/materia/:idCurso" element={<MateriasDelCurso />} />
+            <Route path="/curso/participantes/:idCurso" element={<Participantes />} />
+          </Route>
 
-           <Route
-            path="/usuario/editar/:id"
-            element={
-              <ProtectedRoute>
-                <EditarUsuario />
-              </ProtectedRoute>
-            }
-          />
+          {/* Rutas solo para profesores */}
+          <Route element={<ProtectedRoute allowedRoles={['profesor']} />}>
+            <Route path="/profesor/:idProfesor" element={<ProfesorPerfil />} />
+            {/* Agrega aquí otras rutas específicas para profesores */}
+          </Route>
 
-            <Route
-            path="/usuario/asignarRol/:idUsuario"
-            element={
-              <ProtectedRoute>
-                <AsignarRolUsuario />
-              </ProtectedRoute>
-            }
-          />
-           <Route
-            path="/agregarAnio"
-            element={
-              <ProtectedRoute>
-                <AgregarAnio />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/materias"
-            element={
-              <ProtectedRoute>
-                <Materias />
-              </ProtectedRoute>
-            }
-          />
-           <Route
-            path="/cursos/:idanio"
-            element={
-              <ProtectedRoute>
-                <CursosPorAnio/>
-              </ProtectedRoute>
-            }
-          />
 
-           <Route
-            path="/cursos/materia/:idCurso"
-            element={
-              <ProtectedRoute>
-                <MateriasDelCurso/>
-              </ProtectedRoute>
-            }
-          />
-
+          {/* Manejo de rutas no encontradas */}
+          <Route path="*" element={<NoAutorizado />} />
         </Routes>
-      </BrowserRouter>
+      
     </AuthProvider>
+    </BrowserRouter>
   );
 }
 

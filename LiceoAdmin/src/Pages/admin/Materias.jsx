@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Navbar from "../components/Nabvar";
+import Navbar from "../../components/Nabvar";
 
 function Materias() {
   const [materias, setMaterias] = useState([]);

@@ -1,4 +1,4 @@
-import Navbar from "../components/Nabvar";
+import Navbar from "../../components/Nabvar";
 import { useState } from 'react';
 
 function AgregarAnio() {

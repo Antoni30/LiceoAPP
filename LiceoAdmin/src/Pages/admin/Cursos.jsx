@@ -1,7 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "../components/Nabvar";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash, faPenToSquare, faBook , faUsers} from "@fortawesome/free-solid-svg-icons";
+import Navbar from "../../components/Nabvar";
 
 function CursosPorAnio() {
   const { idanio } = useParams();
@@ -42,6 +44,8 @@ function CursosPorAnio() {
       setIsLoading(false);
     }
   };
+
+
 
   const handleCreateCurso = async () => {
     setIsLoading(true);
@@ -101,7 +105,8 @@ function CursosPorAnio() {
     setIsLoading(true);
     try {
       const updatedCurso = {
-        idAnioLectivo: editCurso.id,
+        id:editCurso.id,
+        idAnioLectivo: idanio,
         nombreCurso: nombreCursoEdit,
       };
 
@@ -303,13 +308,13 @@ function CursosPorAnio() {
                                   onClick={() => handleEditCurso(curso)}
                                   className="text-indigo-600 hover:text-indigo-900"
                                 >
-                                  Editar
+                                  <FontAwesomeIcon icon={faPenToSquare} size="xl"/> Editar
                                 </button>
                                 <button
                                   onClick={() => handleDeleteCurso(curso.id)}
                                   className="text-red-600 hover:text-red-900"
                                 >
-                                  Eliminar
+                                  <FontAwesomeIcon icon={faTrash} className="text-xl" /> Eliminar
                                 </button>
                                 <button
                                   onClick={() =>
@@ -317,16 +322,16 @@ function CursosPorAnio() {
                                   }
                                   className="text-green-600 hover:text-green-900"
                                 >
-                                  Materias
+                                   <FontAwesomeIcon icon={faBook} className="text-xl" /> Materias
                                 </button>
 
                                 <button
                                   onClick={() =>
-                                    navigate(`/participantes/${curso.id}`)
+                                    navigate(`/curso/participantes/${curso.id}`)
                                   }
                                   className="text-amber-600 hover:text-amber-900"
                                 >
-                                  Participantes
+                                   <FontAwesomeIcon icon={faUsers} className="text-2xl" /> Participantes
                                 </button>
                               </>
                             )}

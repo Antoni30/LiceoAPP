@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Nabvar";
+import Navbar from "../../components/Nabvar";
 import { useNavigate } from "react-router-dom";
 
 export default function Usuarios() {

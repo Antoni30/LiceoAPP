@@ -1,24 +1,21 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
 
-export default function Navbar() {
+export default function NavbarProfesor() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth(); // usamos la función logout del contexto
+   const { logout } = useAuth();
 
+  // Función para determinar si una ruta está activa
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
     fetch("http://localhost:8080/api/auth/logout", {
       method: "POST",
       credentials: "include",
-    })
-      .catch((error) => {
-        console.error("Error en logout:", error);
-      })
-      .finally(() => {
-        logout(); // llama a logout del AuthProvider (ya hace navigate('/login'))
-      });
+    }).finally(() => {
+      logout()
+    });
   };
 
   return (
@@ -26,44 +23,48 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex space-x-8">
+            {/* Logo o marca */}
             <div className="flex-shrink-0 flex items-center">
               <span className="text-xl font-bold text-indigo-600">Lice ADMIN</span>
             </div>
-
+            
+            {/* Navegación principal */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("")}
                 className={`${
-                  isActive("/dashboard") 
+                  isActive("") 
                     ? 'border-indigo-500 text-gray-900' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Dashboard
+                Notas
               </button>
               <button
-                onClick={() => navigate("/usuarios")}
+                onClick={() => navigate("")}
                 className={`${
-                  isActive("/usuarios") 
+                  isActive("") 
                     ? 'border-indigo-500 text-gray-900' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Usuarios
+                Generar Reporte
               </button>
+
               <button
-                onClick={() => navigate("/materias")}
+                onClick={() => navigate("")}
                 className={`${
-                  isActive("/materias") 
+                  isActive("") 
                     ? 'border-indigo-500 text-gray-900' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Materias
+                Horario
               </button>
             </div>
           </div>
-
+          
+          {/* Botón de logout */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <button
               onClick={handleLogout}
@@ -72,7 +73,8 @@ export default function Navbar() {
               Cerrar Sesión
             </button>
           </div>
-
+          
+          {/* Menú móvil (icono hamburguesa) */}
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               type="button"
@@ -81,11 +83,35 @@ export default function Navbar() {
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="block h-6 w-6"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
-              <svg className="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="hidden h-6 w-6"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "../components/Nabvar";
+import Navbar from "../../components/Nabvar";
 
 function MateriasDelCurso() {
   const { idCurso } = useParams();
   const navigate = useNavigate();
-  const [materias, setMaterias] = useState([]); // Materias asignadas al curso
+  //const [materias, setMaterias] = useState([]); // Materias asignadas al curso
   const [allMaterias, setAllMaterias] = useState([]); // Todas las materias disponibles
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,6 +16,7 @@ function MateriasDelCurso() {
   useEffect(() => {
     fetchMateriasCurso();
     fetchMateriasDisponibles();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idCurso]);
 
   // Obtener las materias ya asignadas al curso
