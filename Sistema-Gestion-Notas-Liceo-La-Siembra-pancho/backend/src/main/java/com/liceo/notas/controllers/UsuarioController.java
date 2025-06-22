@@ -73,7 +73,7 @@ public class UsuarioController {
      *         - Código 404 (NOT FOUND) si el usuario no existe
      */
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> actualizar(
+    public ResponseEntity<UsuarioDTO> actualizar(@Valid
             @PathVariable String id,
             @RequestBody UsuarioDTO usuarioDTO) {
         return usuarioService.actualizarUsuario(id, usuarioDTO)

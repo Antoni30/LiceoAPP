@@ -40,7 +40,7 @@ public class UsuarioDTO {
     private String apellidos;
 
     @NotBlank(message = "El nickname es obligatorio")
-    @Size(min = 4, max = 10, message = "El nickname debe tener entre 4 y 10 caracteres")
+    @Size(min = 4, max = 15, message = "El nickname debe tener entre 4 y 10 caracteres")
     @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "El nickname solo puede contener letras, números, puntos, guiones bajos y guiones")
     private String nickname;
 

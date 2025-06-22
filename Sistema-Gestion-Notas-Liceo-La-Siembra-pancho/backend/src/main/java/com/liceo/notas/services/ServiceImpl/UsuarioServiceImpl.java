@@ -79,7 +79,6 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
 
-
     @Override
     @Transactional
     public void enviarEmailVerificacion(Usuario usuario) {
@@ -140,6 +139,28 @@ public class UsuarioServiceImpl implements UsuarioService {
     public Optional<UsuarioDTO> actualizarUsuario(String id, UsuarioDTO dto) {
         return repository.findById(id)
                 .map(usuario -> {
+
+
+                    if (!ValidacionCedulaEcuatoriana.validar(usuario.getIdUsuario())) {
+                        throw new IllegalArgumentException("La cédula ingresada no es válida para Ecuador");
+                    }
+
+                    // Validación extra de email (opcional, si quieres mantenerla)
+                    if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                        throw new EmailInvalidoException("El formato del email es inválido. Debe ser ejemplo@dominio.com");
+                    }
+
+                    if (!dto.getNombres().matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")) {
+                        throw new IllegalArgumentException("El nombre solo debe contener letras y espacios.");
+                    }
+
+                    if (!dto.getApellidos().matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")) {
+                        throw new IllegalArgumentException("El apellido solo debe contener letras y espacios.");
+                    }
+
+                    if (!dto.getNickname().matches("^[a-zA-Z0-9_-]+$")) {
+                        throw new IllegalArgumentException("El nickname solo puede contener letras, números, guiones y guiones bajos, sin espacios.");
+                    }
                     // Validar email si está siendo modificado
                     if(!usuario.getEmail().equals(dto.getEmail())) {
                         usuario.setEmail(dto.getEmail());

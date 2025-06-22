@@ -30,4 +30,7 @@ public interface CursoRepository extends JpaRepository<Curso, Integer> {
      */
     @Query("SELECT c FROM Curso c WHERE c.anioLectivo.estado = 'Activo'")
     List<Curso> findCursosByAnioActivo();
+
+    boolean existsByNombreCursoIgnoreCaseAndAnioLectivo_Id(String nombreCurso, Integer idAnioLectivo);
+
 }

@@ -24,6 +24,13 @@ public class AnioLectivoServiceImpl implements AnioLectivoService {
     @Override
     @Transactional // Asegura que toda la operación sea atómica
     public AnioLectivoDTO crearAnioLectivo(AnioLectivoDTO dto) {
+
+        List<AnioLectivo> conflictos = repository.findConflictingAnioLectivo(dto.getFechaInicio(), dto.getFechaFinal());
+
+        if (!conflictos.isEmpty()) {
+            throw new RuntimeException("Las fechas se cruzan con un año lectivo existente.");
+        }
+
         // 1. Convierte el DTO a entidad JPA
         AnioLectivo entidad = AnioLectivoMapper.toEntity(dto);
 
@@ -67,6 +74,30 @@ public class AnioLectivoServiceImpl implements AnioLectivoService {
     public Optional<AnioLectivoDTO> actualizarAnioLectivo(Integer id, AnioLectivoDTO dto) {
         return repository.findById(id)
                 .map(entidad -> {
+                    List<AnioLectivo> conflictos = repository.findConflictingAnioLectivo(dto.getFechaInicio(), dto.getFechaFinal());
+
+                    boolean conflictoValido = conflictos.stream()
+                            .anyMatch(a -> !a.getId().equals(id)); // Evita comparar con el mismo registro
+
+                    if (conflictoValido) {
+                        throw new RuntimeException("Las fechas se cruzan con otro año lectivo existente.");
+                    }
+
+                    entidad.setFechaInicio(dto.getFechaInicio());
+                    entidad.setFechaFinal(dto.getFechaFinal());
+                    entidad.setEstado(dto.getEstado());
+
+                    return AnioLectivoMapper.toDTO(repository.save(entidad));
+                });
+    }
+
+
+    @Override
+    @Transactional
+    public Optional<AnioLectivoDTO> actualizarAnioLectivoEstado(Integer id, AnioLectivoDTO dto) {
+        return repository.findById(id)
+                .map(entidad -> {
+
                     // Actualiza los campos de la entidad
                     entidad.setFechaInicio(dto.getFechaInicio());
                     entidad.setFechaFinal(dto.getFechaFinal());

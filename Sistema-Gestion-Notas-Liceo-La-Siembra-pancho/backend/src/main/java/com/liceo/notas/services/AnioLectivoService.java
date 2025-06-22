@@ -56,4 +56,6 @@ public interface AnioLectivoService {
      * @return true si el año lectivo fue eliminado correctamente, false si no se encontró
      */
     boolean eliminarAnioLectivo(Integer id);
+
+    public Optional<AnioLectivoDTO> actualizarAnioLectivoEstado(Integer id, AnioLectivoDTO dto);
 }

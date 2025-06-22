@@ -28,6 +28,16 @@ public class CursoServiceImpl implements CursoService {
     @Override
     @Transactional // Asegura que toda la operación sea atómica
     public CursoDTO crearCurso(CursoDTO dto) {
+
+        boolean cursoExistente = repository.existsByNombreCursoIgnoreCaseAndAnioLectivo_Id(
+                dto.getNombreCurso().toUpperCase().trim(),
+                dto.getIdAnioLectivo()
+        );
+
+        if (cursoExistente) {
+            throw new RuntimeException("Ya existe un curso con ese nombre en el año lectivo.");
+        }
+
         // Convierte el DTO a entidad
         Curso entidad = CursoMapper.toEntity(dto);
 
@@ -36,6 +46,7 @@ public class CursoServiceImpl implements CursoService {
                 .orElseThrow(() -> new RuntimeException("Año lectivo no encontrado"));
         // Establece la relación con el año lectivo
         entidad.setAnioLectivo(anioLectivo);
+
 
         // Guarda la entidad y convierte el resultado a DTO
         entidad = repository.save(entidad);
@@ -87,6 +98,16 @@ public class CursoServiceImpl implements CursoService {
     public Optional<CursoDTO> actualizarCurso(Integer id, CursoDTO dto) {
         return repository.findById(id)
                 .map(entidad -> {
+
+                    boolean cursoExistente = repository.existsByNombreCursoIgnoreCaseAndAnioLectivo_Id(
+                            entidad.getNombreCurso().toUpperCase().trim(),
+                            entidad.getAnioLectivo().getId()
+                    );
+
+                    if (cursoExistente) {
+                        throw new RuntimeException("Ya existe un curso con ese nombre en el año lectivo.");
+                    }
+
                     // Actualiza el nombre del curso
                     entidad.setNombreCurso(dto.getNombreCurso());
 

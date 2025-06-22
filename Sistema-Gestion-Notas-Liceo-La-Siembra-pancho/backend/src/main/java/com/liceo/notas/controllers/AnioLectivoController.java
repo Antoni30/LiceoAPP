@@ -93,6 +93,15 @@ public class AnioLectivoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/estado/{id}")
+    public ResponseEntity<AnioLectivoDTO> actualizarEstado(
+            @PathVariable Integer id,
+            @RequestBody AnioLectivoDTO dto) {
+        return service.actualizarAnioLectivoEstado(id, dto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     /**
      * Elimina un año lectivo por su ID.
      *
