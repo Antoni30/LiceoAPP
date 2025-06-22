@@ -22,8 +22,11 @@ public class MateriaServiceImpl implements MateriaService {
     @Override
     @Transactional
     public MateriaDTO crearMateria(MateriaDTO dto) {
-        // Verificar si el nombre de materia ya existe
-        if(repository.findByNombreMateria(dto.getNombreMateria()).isPresent()) {
+
+        String nombreEnMayusculas = dto.getNombreMateria().toUpperCase();
+        dto.setNombreMateria(nombreEnMayusculas);
+
+        if(repository.findByNombreMateria(nombreEnMayusculas).isPresent()) {
             throw new RuntimeException("Ya existe una materia con ese nombre");
         }
 

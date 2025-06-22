@@ -1,5 +1,6 @@
 package com.liceo.notas.dtos;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,48 +26,24 @@ import java.util.List;
  */
 @Data
 public class UsuarioDTO {
-    /**
-     * Identificador único del usuario en el sistema.
-     * Ejemplo: cédula, documento de identidad o UUID.
-     * Formato: String para mayor flexibilidad.
-     */
-
     @NotBlank(message = "La cédula es obligatoria")
     @Size(min = 10, max = 10, message = "La cédula debe tener exactamente 10 dígitos")
     @Pattern(regexp = "^[0-9]*$", message = "La cédula solo debe contener números")
-
     private String idUsuario;
 
-    /**
-     * Nombres del usuario.
-     * Ejemplo: "María José" o "Carlos Andrés".
-     * No debe contener números ni caracteres especiales.
-     */
+    @NotBlank(message = "Los nombres son obligatorios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$", message = "Los nombres solo deben contener letras")
     private String nombres;
 
-    /**
-     * Apellidos del usuario.
-     * Ejemplo: "García López" o "Pérez Rodríguez".
-     * No debe contener números ni caracteres especiales.
-     */
+    @NotBlank(message = "Los apellidos son obligatorios")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$", message = "Los apellidos solo deben contener letras")
     private String apellidos;
 
-    /**
-     * Nombre de usuario para autenticación (login).
-     * Debe ser único en el sistema.
-     * Ejemplo: "mgarci23" o "cperez".
-     */
+    @NotBlank(message = "El nickname es obligatorio")
+    @Size(min = 4, max = 10, message = "El nickname debe tener entre 4 y 10 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "El nickname solo puede contener letras, números, puntos, guiones bajos y guiones")
     private String nickname;
 
-    /**
-     * Contraseña del usuario.
-     * En entornos de producción, siempre debe almacenarse encriptada.
-     * Debe cumplir con políticas de seguridad mínimas:
-     * - Mínimo 8 caracteres
-     * - Letras mayúsculas/minúsculas
-     * - Números
-     * - Caracteres especiales
-     */
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     @Pattern(
@@ -75,24 +52,16 @@ public class UsuarioDTO {
     )
     private String contrasena;
 
-    /**
-     * Estado actual del usuario en el sistema.
-     * Valores típicos: "ACTIVO", "INACTIVO", "PENDIENTE".
-     * Controla si el usuario puede acceder al sistema.
-     */
+    @NotBlank(message = "El estado es obligatorio")
+    @Pattern(regexp = "^(ACTIVO|INACTIVO)$", message = "El estado debe ser ACTIVO, INACTIVO o PENDIENTE")
     private String estado;
 
-    /**
-     * Lista de identificadores de roles asignados al usuario.
-     * Cada ID debe corresponder a un rol existente en el sistema.
-     * Ejemplo: [1, 3] para roles "ADMIN" y "PROFESOR".
-     */
+    @Email(message = "Debe ser un email válido")
+    @NotBlank(message = "El email es obligatorio")
+    private String email;
+
     private List<Integer> roles;
     private boolean mfaHabilitado;
-
-    private String email;
     private String mfaSecret;
-
     private boolean emailVerificado;
-
 }

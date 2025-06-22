@@ -29,9 +29,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        List<String> excludedPaths = List.of("/api/auth/login", "/api/auth/verify-mfa");
+        List<String> excludedPaths = List.of(
+                "/api/auth/login",
+                "/api/auth/verify-mfa",
+                "/swagger-ui/",
+                "/swagger-ui/index.html",
+                "/v3/api-docs"
+        );
 
-        if (excludedPaths.contains(path)) {
+
+        boolean isExcluded = excludedPaths.stream().anyMatch(path::startsWith);
+
+        if (isExcluded) {
             filterChain.doFilter(request, response);
             return;
         }

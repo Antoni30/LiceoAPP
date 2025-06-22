@@ -124,7 +124,6 @@ public class AuthController {
                 @RequestParam String id,
                 @RequestParam String email,
                 Model model) {
-
             model.addAttribute("idUsuario", id);
             model.addAttribute("email", email);
             return "form-restablecimiento";  // Nombre de tu plantilla HTML/Thymeleaf

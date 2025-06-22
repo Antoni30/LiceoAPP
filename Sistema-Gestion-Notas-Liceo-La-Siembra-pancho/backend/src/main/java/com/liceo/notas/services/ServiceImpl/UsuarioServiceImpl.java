@@ -8,6 +8,9 @@ import com.liceo.notas.repositories.UsuarioRepository;
 import com.liceo.notas.services.EmailService;
 import com.liceo.notas.services.UsuarioService;
 import com.liceo.notas.services.ValidacionCedulaEcuatoriana;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,39 +38,45 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Autowired
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+
     @Override
     @Transactional
     public UsuarioDTO crearUsuario(UsuarioDTO dto) {
-        // 1. Validaciones básicas
-        if(repository.findByNickname(dto.getNickname()).isPresent()) {
+        // Validación de unicidad de nickname y cédula
+        if (repository.findByNickname(dto.getNickname()).isPresent()) {
             throw new RuntimeException("El nickname ya está en uso");
         }
-        // Validación de cédula
+
         if (!ValidacionCedulaEcuatoriana.validar(dto.getIdUsuario())) {
             throw new IllegalArgumentException("La cédula ingresada no es válida para Ecuador");
         }
 
-        // En UsuarioServiceImpl.java
-        if(!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+        if (repository.findByIdUsuario(dto.getIdUsuario()).isPresent()) {
+            throw new RuntimeException("La cédula ya está en uso");
+        }
+
+        // Validación extra de email (opcional, si quieres mantenerla)
+        if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
             throw new EmailInvalidoException("El formato del email es inválido. Debe ser ejemplo@dominio.com");
         }
 
-        // 2. Preparar entidad
+        // Preparar y guardar usuario
         String contrasenaHasheada = passwordEncoder.encode(dto.getContrasena());
         dto.setContrasena(contrasenaHasheada);
+
         Usuario usuario = UsuarioMapper.toEntity(dto);
         usuario.setEmailVerificado(false);
         usuario.setTokenVerificacion(UUID.randomUUID().toString());
 
-        // 3. Guardar en BD
         usuario = repository.save(usuario);
 
-        // 4. Enviar email de verificación
         enviarEmailVerificacion(usuario);
 
         return UsuarioMapper.toDTO(usuario);
     }
-
 
 
 

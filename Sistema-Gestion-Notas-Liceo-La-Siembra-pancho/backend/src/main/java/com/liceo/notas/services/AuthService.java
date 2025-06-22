@@ -341,8 +341,6 @@ public class AuthService {
 
 
 
-
-
     @Transactional
     public void cambiarContrasena(String idUsuario, String email, String nuevaContrasena) {
         // 1. Busca por ID (único)
