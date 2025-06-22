@@ -47,7 +47,7 @@ function NoAutorizado() {
                 to={userRole.toLowerCase() === 'administrador' ? '/dashboard' : '/profesor'}
                 className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
               >
-                Ir a mi área
+                Ir a mi área de trabajo
               </Link>
               <button
                 onClick={logout}

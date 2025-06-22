@@ -58,7 +58,6 @@ export default function UsuarioCrear() {
 
       navigate("/usuarios");
     } catch (err) {
-      console.error(err);
       setExistente(err.message);
     } finally {
       setIsSubmitting(false);
@@ -101,7 +100,7 @@ export default function UsuarioCrear() {
                   htmlFor="idUsuario"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  ID Usuario *
+                  Cedula Estudiante *
                 </label>
                 <input
                   type="text"

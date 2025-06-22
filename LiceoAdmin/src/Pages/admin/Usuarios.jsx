@@ -6,10 +6,12 @@ export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(true);
   const [searchId, setSearchId] = useState("");
   const [userRol, setUserRol] = useState({});
   const navigate = useNavigate();
+  const [sendingState, setSendingState] = useState({});
 
   useEffect(() => {
     fetch("http://localhost:8080/api/usuarios", {
@@ -78,6 +80,55 @@ export default function Usuarios() {
     navigate(`/usuario/asignarRol/${idUsuario}`);
   };
 
+  const handleRenviar = async (nickname, email) => {
+    setSendingState((prev) => ({ ...prev, [nickname]: true }));
+    try {
+      setMessage(""); // Limpiar mensajes anteriores
+      const payload = {
+        nickname: nickname,
+        email: email,
+      };
+
+      const response = await fetch(
+        `http://localhost:8080/api/auth/resend-verification-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json(); // Siempre parsear la respuesta JSON
+
+      if (!response.ok) {
+        // Manejar errores 400, 404, etc.
+        throw new Error(data.message || "Error al re-enviar el correo");
+      }
+
+      setTimeout(() => {
+        setSendingState((prev) => ({ ...prev, [nickname]: false }));
+      }, 2000);
+
+       setTimeout(() => {
+        setMessage("")
+      }, 4000);
+      // Éxito (código 200)
+      setMessage({
+        text: data.message +" a "+ nickname || "Correo de verificación reenviado " + email,
+        type: "success",
+      });
+    } catch (err) {
+      // Manejar diferentes tipos de errores
+      setMessage({
+        text: err.message || "Ocurrió un error inesperado",
+        type: "error",
+      });
+    } finally {
+      setLoading(false); // Desactivar estado de carga
+    }
+  };
+
   const handleSearch = (e) => {
     const searchTerm = e.target.value.toLowerCase();
     setSearchId(searchTerm);
@@ -110,6 +161,44 @@ export default function Usuarios() {
   return (
     <>
       <Navbar />
+      {message.text && (
+        <div
+          className={`p-4 mb-4 rounded-md absolute  top-0 right-0 ${
+            message.type === "success"
+              ? "bg-green-700 text-white border border-green-200"
+              : "bg-red-700 text-white border border-red-200"
+          }`}
+        >
+          <div className="flex items-center">
+            {message.type === "success" ? (
+              <svg
+                className="h-5 w-5 text-green-500 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-5 w-5 text-red-500 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+            <p>{message.text}</p>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-gray-800">
@@ -276,7 +365,6 @@ export default function Usuarios() {
                             </svg>
                             Editar
                           </button>
-
                           <button
                             onClick={() => handleRoleUpdate(user.idUsuario)}
                             className="inline-flex items-center px-3 py-1 border border-amber-600 rounded-md shadow-sm text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200"
@@ -296,7 +384,49 @@ export default function Usuarios() {
                             </svg>
                             Roles
                           </button>
-
+                          <button
+                            onClick={() =>
+                              handleRenviar(user.nickname, user.email)
+                            }
+                            disabled={sendingState[user.nickname]}
+                            className={`inline-flex items-center px-3 py-1 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+                              sendingState[user.nickname]
+                                ? "border-green-600 text-green-700 bg-green-50 hover:bg-green-100 focus:ring-green-500"
+                                : "border-amber-600 text-amber-700 bg-amber-50 hover:bg-amber-100 focus:ring-amber-500"
+                            }`}
+                          >
+                            <svg
+                              className={`h-5 w-5 ${
+                                sendingState[user.nickname]
+                                  ? "text-green-500"
+                                  : "text-green-500 animate-pulse"
+                              }`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 13l3 3m0 0l3-3m-3 3V8"
+                                className={
+                                  sendingState[user.nickname]
+                                    ? "text-green-300"
+                                    : "text-green-300"
+                                }
+                              />
+                            </svg>
+                            {sendingState[user.nickname]
+                              ? "Enviado!"
+                              : "Re-enviar"}
+                          </button>
                         </div>
                       </td>
                     </tr>

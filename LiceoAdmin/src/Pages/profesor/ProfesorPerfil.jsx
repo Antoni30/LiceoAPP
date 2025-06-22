@@ -2,15 +2,18 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import NavbarProfesor from "../../components/NabvarProfesor";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useAuth } from "../../hooks/AuthProvider";
 
 export default function ProfesorPerfil() {
   const { idProfesor } = useParams();
   const [profesor, setProfesor] = useState(null);
   const [estudiantes, setEstudiantes] = useState([]);
   const [idCurso, setIdCurso] = useState("");
+  const [nombreCurso, setNombreCurso] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const { logout } = useAuth();
   const [nuevoEstudiante, setNuevoEstudiante] = useState({
     idUsuario: "",
     nombres: "",
@@ -20,6 +23,15 @@ export default function ProfesorPerfil() {
     estado: "ACTIVO",
     email: "",
   });
+
+   const handleLogout = () => {
+    fetch("http://localhost:8080/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).finally(() => {
+      logout()
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -39,9 +51,16 @@ export default function ProfesorPerfil() {
         if (!resCursos.ok) throw new Error("No se pudo cargar el curso");
         const cursos = await resCursos.json();
         if (!cursos.length)
-          throw new Error("El profesor no está asignado a un curso");
+          throw new Error("Profesor disponible (sin cursos asignados) - Requiere acción administrativa");
         const cursoId = cursos[0].idCurso;
         setIdCurso(cursoId);
+
+        const nombreCurso = await fetch(
+          `http://localhost:8080/api/cursos/${cursoId}`,
+          { credentials: "include" }
+        )
+        const nombreCursoRespond = await nombreCurso.json();
+        setNombreCurso(nombreCursoRespond.nombreCurso)
 
         const resUsuCursos = await fetch(
           `http://localhost:8080/api/usuarios-cursos/curso/${cursoId}`,
@@ -149,7 +168,7 @@ if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-red-500 font-medium text-lg mb-2">Error</div>
+          <div className="text-red-500 font-medium text-lg mb-2">ESTADO</div>
           <p className="text-gray-700">{error}</p>
           <button 
             onClick={() => window.location.reload()}
@@ -157,6 +176,14 @@ if (cargando) {
           >
             Reintentar
           </button>
+
+           <button 
+            onClick={handleLogout}
+            className="mt-4 bg-red-700 text-white px-4 py-2 w-1/4 mx-1.5 rounded-md hover:bg-red-500"
+          >
+            Salir
+          </button>
+        
         </div>
       </div>
     );
@@ -185,7 +212,7 @@ if (cargando) {
         {/* Contenido principal */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Estudiantes del Curso</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Estudiantes del Curso {nombreCurso}</h2>
             <button
               onClick={() => setShowForm(true)}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
@@ -269,7 +296,7 @@ if (cargando) {
 
         {/* Modal para agregar nuevo estudiante */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Agregar Nuevo Estudiante</h3>

@@ -46,13 +46,13 @@ function Login() {
       );
 
       if (!rolResponse.ok) {
-        throw new Error("No se pudo obtener la información de roles");
+        throw new Error("El rol de usuario aún no ha sido asignado por el administrador del sistema.");
       }
 
       const roles = await rolResponse.json();
 
       if (roles.length === 0) {
-        throw new Error("Usuario sin roles asignados");
+        throw new Error("Estado: Pendiente de asignación de rol por parte del administrador.");
       }
 
       // 4. Obtener nombre del rol

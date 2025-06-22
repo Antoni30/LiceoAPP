@@ -16,6 +16,7 @@ import Participantes from "./Pages/admin/Participantes";
 import ProfesorPerfil from "./Pages/profesor/ProfesorPerfil";
 import NoAutorizado from "./Pages/NoAutorizado";
 import Home from "./Pages/Home";
+import ProfesorHome from "./Pages/profesor/ProfesorHome";
 
 function App() {
   return (
@@ -49,10 +50,9 @@ function App() {
           {/* Rutas solo para profesores */}
           <Route element={<ProtectedRoute allowedRoles={['profesor']} />}>
             <Route path="/profesor/:idProfesor" element={<ProfesorPerfil />} />
+            <Route path="/profesorHome" element={<ProfesorHome/>} />
             {/* Agrega aquí otras rutas específicas para profesores */}
           </Route>
-
-
           {/* Manejo de rutas no encontradas */}
           <Route path="*" element={<NoAutorizado />} />
         </Routes>

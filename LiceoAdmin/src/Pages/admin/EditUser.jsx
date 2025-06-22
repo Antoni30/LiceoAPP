@@ -16,6 +16,7 @@ export default function EditarUsuario() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [existente, setExistente] = useState("");
 
   useEffect(() => {
     setMessage("");
@@ -65,6 +66,8 @@ export default function EditarUsuario() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setExistente("");
+    setMessage("");
     setError(null);
 
     try {
@@ -90,12 +93,27 @@ export default function EditarUsuario() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Error al actualizar el usuario");
+
+        if (typeof errData === "object" && !Array.isArray(errData)) {
+          if (errData.message) {
+            // Error general tipo "ya existe"
+            setExistente(errData.message);
+          } else {
+           const messages = Object.values(errData).join("\n");
+
+            setMessage(messages);
+          }
+        } else {
+          setExistente("Error desconocido al crear usuario");
+        }
+
+        return; // no continues con navigate
       }
 
       navigate(-1);
     } catch (err) {
       setMessage(err.message);
+      setExistente(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -268,14 +286,20 @@ export default function EditarUsuario() {
               </button>
             </div>
           </form>
+           {existente && (
+            <div className="mt-4 p-3 rounded-md bg-yellow-50 text-yellow-700">
+              <p className="text-sm font-medium">{existente}</p>
+            </div>
+          )}
+
           {message && (
-            <div
-              className={`mt-4 p-3 rounded-md ${
-                message.includes("Error")
-                  ? "bg-red-50 text-red-700"
-                  : "bg-green-50 text-green-700"
-              }`}
-            ></div>
+            <div className="mt-4 p-3 rounded-md bg-red-50 text-red-700">
+              {message.split("\n").map((line, idx) => (
+                <p key={idx} className="text-sm">
+                  {line}
+                </p>
+              ))}
+            </div>
           )}
         </div>
       </div>

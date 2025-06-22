@@ -43,17 +43,17 @@ function Dashboard() {
     }
   };
 
-  const handleToggleState = async (id, estado) => {
+  const handleToggleState = async (id, estado,fechaInicio,fechaFinal) => {
     setIsLoading(true);
     try {
       const updatedAnio = {
-        fechaInicio: "2025-05-05",
-        fechaFinal: "2026-03-11",
+        fechaInicio: fechaInicio,
+        fechaFinal: fechaFinal,
         estado: estado === "Activo" ? "Inactivo" : "Activo",
       };
 
       const response = await fetch(
-        `http://localhost:8080/api/anios-lectivos/${id}`,
+        `http://localhost:8080/api/anios-lectivos/estado/${id}`,
         {
           method: "PUT",
           headers: {
@@ -115,7 +115,7 @@ function Dashboard() {
         }
       );
 
-      if (!response.ok) throw new Error("Error al guardar los cambios");
+      if (!response.ok) throw new Error("Las fechas se cruzan con otro año lectivo existente");
 
       fetchAniosLectivos();
       setEditAnio({ id: null, fechaInicio: "", fechaFinal: "", error: "" });
@@ -141,9 +141,13 @@ function Dashboard() {
   });
 
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return new Date(dateString).toLocaleDateString("es-ES", options);
-  };
+  // Extraer directamente las partes de la fecha del string (asumiendo formato YYYY-MM-DD)
+  const [year, month, day] = dateString.split('-');
+  
+  // Usar estas partes directamente para evitar problemas de zona horaria
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(year, month - 1, day).toLocaleDateString('es-ES', options);
+};
 
   const handleAddYears = () => {
     navigate(`/agregarAnio`);
@@ -343,7 +347,7 @@ function Dashboard() {
 
                     {!editAnio.id || editAnio.id !== anio.id ? (
                        <button
-                      onClick={() => handleToggleState(anio.id, anio.estado)}
+                      onClick={() => handleToggleState(anio.id, anio.estado,anio.fechaInicio,anio.fechaFinal)}
                       className="px-3 py-1 text-sm text-red-600 hover:text-red-900"
                     >
                       {anio.estado === "Activo" ? "Desactivar" : "Activar"}
