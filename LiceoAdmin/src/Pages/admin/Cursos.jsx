@@ -1,8 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPenToSquare, faBook , faUsers} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTrash,
+  faPenToSquare,
+  faBook,
+  faUsers,
+} from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../../components/Nabvar";
 
 function CursosPorAnio() {
@@ -10,6 +15,7 @@ function CursosPorAnio() {
   const navigate = useNavigate();
   const [cursos, setCursos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -19,6 +25,8 @@ function CursosPorAnio() {
   });
   const [editCurso, setEditCurso] = useState(null);
   const [nombreCursoEdit, setNombreCursoEdit] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cursoToDelete, setCursoToDelete] = useState(null);
 
   useEffect(() => {
     fetchCursos();
@@ -45,8 +53,6 @@ function CursosPorAnio() {
     }
   };
 
-
-
   const handleCreateCurso = async () => {
     setIsLoading(true);
     try {
@@ -66,7 +72,7 @@ function CursosPorAnio() {
       setNewCurso({ ...newCurso, nombreCurso: "" });
     } catch (err) {
       if (err.message === "Error al crear el curso") {
-        setErrorMessage("Ya existe el curso"); // Si el error es por duplicado, se muestra este mensaje
+        setErrorMessage("Ya existe el curso");
       } else {
         setErrorMessage(err.message);
       }
@@ -75,22 +81,32 @@ function CursosPorAnio() {
     }
   };
 
-  const handleDeleteCurso = async (id) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este curso?"))
-      return;
+  const confirmDelete = (curso) => {
+    setCursoToDelete(curso);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteCurso = async () => {
+    if (!cursoToDelete) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/cursos/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/cursos/${cursoToDelete.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error("Error al eliminar el curso");
-
+      if (!response.ok) {
+        throw new Error("Curso con estudiantes y materias");
+      }
       fetchCursos();
+      setShowDeleteModal(false);
+      setCursoToDelete(null);
     } catch (err) {
-      setError(err.message);
+      setMessage(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +121,7 @@ function CursosPorAnio() {
     setIsLoading(true);
     try {
       const updatedCurso = {
-        id:editCurso.id,
+        id: editCurso.id,
         idAnioLectivo: idanio,
         nombreCurso: nombreCursoEdit,
       };
@@ -128,7 +144,7 @@ function CursosPorAnio() {
       setEditCurso(null);
     } catch (err) {
       if (err.message === "Error al guardar los cambios") {
-        setErrorMessage("Ya existe el curso"); // Si el error es por duplicado, se muestra este mensaje
+        setErrorMessage("Ya existe el curso");
       } else {
         setErrorMessage(err.message);
       }
@@ -308,13 +324,21 @@ function CursosPorAnio() {
                                   onClick={() => handleEditCurso(curso)}
                                   className="text-indigo-600 hover:text-indigo-900"
                                 >
-                                  <FontAwesomeIcon icon={faPenToSquare} size="xl"/> Editar
+                                  <FontAwesomeIcon
+                                    icon={faPenToSquare}
+                                    size="xl"
+                                  />{" "}
+                                  Editar
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteCurso(curso.id)}
+                                  onClick={() => confirmDelete(curso)}
                                   className="text-red-600 hover:text-red-900"
                                 >
-                                  <FontAwesomeIcon icon={faTrash} className="text-xl" /> Eliminar
+                                  <FontAwesomeIcon
+                                    icon={faTrash}
+                                    className="text-xl"
+                                  />{" "}
+                                  Eliminar
                                 </button>
                                 <button
                                   onClick={() =>
@@ -322,7 +346,11 @@ function CursosPorAnio() {
                                   }
                                   className="text-green-600 hover:text-green-900"
                                 >
-                                   <FontAwesomeIcon icon={faBook} className="text-xl" /> Materias
+                                  <FontAwesomeIcon
+                                    icon={faBook}
+                                    className="text-xl"
+                                  />{" "}
+                                  Materias
                                 </button>
 
                                 <button
@@ -331,7 +359,11 @@ function CursosPorAnio() {
                                   }
                                   className="text-amber-600 hover:text-amber-900"
                                 >
-                                   <FontAwesomeIcon icon={faUsers} className="text-2xl" /> Participantes
+                                  <FontAwesomeIcon
+                                    icon={faUsers}
+                                    className="text-2xl"
+                                  />{" "}
+                                  Participantes
                                 </button>
                               </>
                             )}
@@ -445,6 +477,90 @@ function CursosPorAnio() {
                 Aceptar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para confirmar eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Confirmar Eliminación
+              </h2>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-700">
+                ¿Estás seguro que deseas eliminar el curso{" "}
+                <span className="font-semibold">
+                  "{cursoToDelete?.nombreCurso}"
+                </span>
+                ?
+              </p>
+              <p className="text-sm text-red-600 mt-2">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMessage("");
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteCurso}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                disabled={isLoading}
+              >
+                {isLoading ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+            {message && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded my-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-red-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{message}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

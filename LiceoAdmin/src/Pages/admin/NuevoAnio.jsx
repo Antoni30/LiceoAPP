@@ -1,5 +1,6 @@
 import Navbar from "../../components/Nabvar";
 import { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 
 function AgregarAnio() {
   const [fechaInicio, setFechaInicio] = useState('');
@@ -7,37 +8,45 @@ function AgregarAnio() {
   const [estado, setEstado] = useState('Activo');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate=useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    const nuevoAnio = {
-      fechaInicio,
-      fechaFinal,
-      estado,
-    };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null); // Limpiar error anterior
 
-    try {
-      const response = await fetch('http://localhost:8080/api/anios-lectivos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(nuevoAnio),
-      });
+  // Validación: fechaFinal debe ser mayor que fechaInicio
+  if (new Date(fechaFinal) <= new Date(fechaInicio)) {
+    setError("La fecha final debe ser mayor que la fecha de inicio.");
+    setIsLoading(false);
+    return;
+  }
 
-      if (!response.ok) throw new Error('Error al agregar el nuevo año lectivo');
-
-      // Si la creación fue exitosa, redirigimos a la página de dashboard o lista de años lectivos
-      history.push('/dashboard');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const nuevoAnio = {
+    fechaInicio,
+    fechaFinal,
+    estado,
   };
+
+  try {
+    const response = await fetch('http://localhost:8080/api/anios-lectivos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(nuevoAnio),
+    });
+
+    if (!response.ok) throw new Error('Error al agregar el nuevo año lectivo');
+
+    navigate(-1);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <>
@@ -119,6 +128,14 @@ function AgregarAnio() {
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 {isLoading ? 'Cargando...' : 'Agregar Año Lectivo'}
+              </button>
+
+               <button
+                type="submit"
+                onClick={()=>navigate(-1)}
+                className="px-4 py-2 mx-1 bg-red-600 text-white rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Cancelar
               </button>
             </div>
           </form>

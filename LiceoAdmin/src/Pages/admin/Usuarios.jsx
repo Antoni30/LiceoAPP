@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../../components/Nabvar";
 import { useNavigate } from "react-router-dom";
 
@@ -74,7 +74,6 @@ export default function Usuarios() {
   const handleEdit = (idUsuario) => {
     navigate(`/usuario/editar/${idUsuario}`);
   };
-
   const handleRoleUpdate = (idUsuario) => {
     navigate(`/usuario/asignarRol/${idUsuario}`);
   };
@@ -234,16 +233,21 @@ export default function Usuarios() {
                           {user.estado}
                         </span>
                       </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        !userRol[user.idUsuario] ? 'bg-gray-100 text-gray-800' :
-                        userRol[user.idUsuario] === 1 ? 'bg-purple-100 text-purple-800' :
-                        userRol[user.idUsuario] === 2 ? 'bg-blue-100 text-blue-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {getRolName(userRol[user.idUsuario])}
-                      </span>
-                    </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            !userRol[user.idUsuario]
+                              ? "bg-gray-100 text-gray-800"
+                              : userRol[user.idUsuario] === 1
+                              ? "bg-purple-100 text-purple-800"
+                              : userRol[user.idUsuario] === 2
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {getRolName(userRol[user.idUsuario])}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {user.mfaHabilitado ? (
                           <span className="text-green-600">Activado</span>
@@ -292,6 +296,7 @@ export default function Usuarios() {
                             </svg>
                             Roles
                           </button>
+
                         </div>
                       </td>
                     </tr>

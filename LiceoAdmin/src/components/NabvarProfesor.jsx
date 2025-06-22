@@ -25,7 +25,7 @@ export default function NavbarProfesor() {
           <div className="flex space-x-8">
             {/* Logo o marca */}
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-indigo-600">Lice ADMIN</span>
+              <span className="text-xl font-bold text-indigo-600">Liceo Profesor</span>
             </div>
             
             {/* Navegación principal */}

@@ -5,16 +5,21 @@ function Materias() {
   const [materias, setMaterias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
   const [editMateria, setEditMateria] = useState(null);
-  const [nombreMateriaEdit, setNombreMateriaEdit] = useState('');
+  const [nombreMateriaEdit, setNombreMateriaEdit] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newMateria, setNewMateria] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [materiaToDelete, setMateriaToDelete] = useState(null);
+  const [newMateria, setNewMateria] = useState("");
 
   useEffect(() => {
+    setMessage("");
     fetchMaterias();
   }, []);
 
   const fetchMaterias = async () => {
+    setMessage("");
     setIsLoading(true);
     try {
       const response = await fetch("http://localhost:8080/api/materias", {
@@ -33,11 +38,13 @@ function Materias() {
   };
 
   const handleEditMateria = (materia) => {
+    setMessage("");
     setEditMateria(materia);
     setNombreMateriaEdit(materia.nombreMateria);
   };
 
   const handleSaveEdit = async () => {
+    setMessage("");
     setIsLoading(true);
     try {
       const updatedMateria = { nombreMateria: nombreMateriaEdit };
@@ -54,7 +61,10 @@ function Materias() {
         }
       );
 
-      if (!response.ok) throw new Error("Error al guardar los cambios");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al guardar los cambios");
+      }
 
       fetchMaterias();
       setEditMateria(null);
@@ -66,30 +76,46 @@ function Materias() {
   };
 
   const handleCancelEdit = () => {
+    setMessage("");
     setEditMateria(null);
   };
 
-  const handleDeleteMateria = async (id) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta materia?")) return;
-    
+  const confirmDelete = (materia) => {
+    setMessage("");
+    setMateriaToDelete(materia);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteMateria = async () => {
+    setMessage("");
+    if (!materiaToDelete) return;
+
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/materias/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/materias/${materiaToDelete.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error("Error al eliminar la materia");
+      if (!response.ok) {
+        throw new Error("Materia asignada a uno o varios cursos");
+      }
 
       fetchMaterias();
+      setShowDeleteModal(false);
+      setMateriaToDelete(null);
     } catch (err) {
-      setError(err.message);
+      setMessage(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateMateria = async () => {
+    setMessage("");
     setIsLoading(true);
     try {
       const response = await fetch("http://localhost:8080/api/materias", {
@@ -101,13 +127,17 @@ function Materias() {
         body: JSON.stringify({ nombreMateria: newMateria }),
       });
 
-      if (!response.ok) throw new Error("Error al crear la materia");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al crear la materia");
+      }
 
       fetchMaterias();
       setShowCreateModal(false);
-      setNewMateria('');
+      setNewMateria("");
     } catch (err) {
-      setError(err.message);
+      setMessage(err.message);
+      setMessage("");
     } finally {
       setIsLoading(false);
     }
@@ -119,13 +149,25 @@ function Materias() {
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Gestión de Materias</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">
+              Gestión de Materias
+            </h1>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               Nueva Materia
             </button>
@@ -139,8 +181,16 @@ function Materias() {
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-red-500"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -154,13 +204,22 @@ function Materias() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         ID
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Nombre de Materia
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Acciones
                       </th>
                     </tr>
@@ -176,7 +235,9 @@ function Materias() {
                             <input
                               type="text"
                               value={nombreMateriaEdit}
-                              onChange={(e) => setNombreMateriaEdit(e.target.value)}
+                              onChange={(e) =>
+                                setNombreMateriaEdit(e.target.value)
+                              }
                               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-md"
                               autoFocus
                             />
@@ -209,7 +270,7 @@ function Materias() {
                                 Editar
                               </button>
                               <button
-                                onClick={() => handleDeleteMateria(materia.id)}
+                                onClick={() => confirmDelete(materia)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 Eliminar
@@ -229,35 +290,79 @@ function Materias() {
 
       {/* Modal para crear nueva materia */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-amber-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">Nueva Materia</h2>
-              <button 
-                onClick={() => setShowCreateModal(false)}
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setMessage("");
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="mb-4">
-              <label htmlFor="newMateria" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="newMateria"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Nombre de la materia
               </label>
               <input
                 id="newMateria"
                 type="text"
                 value={newMateria}
-                onChange={(e) => setNewMateria(e.target.value)}
+                onChange={(e) => {
+                  setNewMateria(e.target.value);
+                  setMessage("");
+                }}
                 className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
                 autoFocus
               />
             </div>
+            {message && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-red-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{message}</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex justify-end space-x-3">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setMessage("");
+                }}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                 disabled={isLoading}
               >
@@ -268,9 +373,96 @@ function Materias() {
                 className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 disabled={isLoading || !newMateria.trim()}
               >
-                {isLoading ? 'Guardando...' : 'Guardar'}
+                {isLoading ? "Guardando..." : "Guardar"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para confirmar eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Confirmar Eliminación
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMessage("");
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-700">
+                ¿Estás seguro que deseas eliminar la materia{" "}
+                <span className="font-semibold">
+                  "{materiaToDelete?.nombreMateria}"
+                </span>
+                ?
+              </p>
+              <p className="text-sm text-red-600 mt-2">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMessage("");
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteMateria}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                disabled={isLoading}
+              >
+                {isLoading ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+              {message && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded my-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-red-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{message}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

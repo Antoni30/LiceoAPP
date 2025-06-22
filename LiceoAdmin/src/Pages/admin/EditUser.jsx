@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function EditarUsuario() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     nombres: "",
     apellidos: "",
@@ -17,6 +18,7 @@ export default function EditarUsuario() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setMessage("");
     const fetchUsuario = async () => {
       try {
         const response = await fetch(
@@ -25,12 +27,12 @@ export default function EditarUsuario() {
             credentials: "include",
           }
         );
-
         if (!response.ok) {
           throw new Error("Error al obtener los datos del usuario");
         }
 
         const data = await response.json();
+
         setForm({
           nombres: data.nombres,
           apellidos: data.apellidos,
@@ -93,7 +95,7 @@ export default function EditarUsuario() {
 
       navigate(-1);
     } catch (err) {
-      setError(err.message);
+      setMessage(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -213,6 +215,22 @@ export default function EditarUsuario() {
                 </select>
               </div>
 
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Email
+                </label>
+                <input
+                  value={form.email}
+                  id="email"
+                  name="email"
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -250,6 +268,15 @@ export default function EditarUsuario() {
               </button>
             </div>
           </form>
+          {message && (
+            <div
+              className={`mt-4 p-3 rounded-md ${
+                message.includes("Error")
+                  ? "bg-red-50 text-red-700"
+                  : "bg-green-50 text-green-700"
+              }`}
+            ></div>
+          )}
         </div>
       </div>
     </div>

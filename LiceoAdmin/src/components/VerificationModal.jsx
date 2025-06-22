@@ -3,34 +3,79 @@ import { useState } from "react";
 function VerificationModal({ idUsuario, onClose, onSuccess }) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setIsLoading(true);
 
-    const response = await fetch("http://localhost:8080/api/auth/verify-mfa", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idUsuario, code }),
-      credentials: "include",
-    });
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/verify-mfa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idUsuario, code }),
+        credentials: "include",
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.success) {
-      setMessage("Verificación MFA exitosa");
-      onSuccess(); // Cierra el modal y redirige al dashboard
-    } else {
-      setMessage("Error: " + data.message);
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Verificación fallida");
+      }
+
+      // ✅ Obtener roles del usuario
+      const rolResponse = await fetch(
+        `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
+        { credentials: "include" }
+      );
+
+      if (!rolResponse.ok) {
+        throw new Error("No se pudo obtener los roles del usuario");
+      }
+
+      const roles = await rolResponse.json();
+
+      if (!roles || roles.length === 0) {
+        throw new Error("El usuario no tiene roles asignados");
+      }
+
+      const idRol = roles[0].idRol;
+
+      const nombreRolResponse = await fetch(
+        `http://localhost:8080/api/roles/${idRol}`,
+        { credentials: "include" }
+      );
+
+      if (!nombreRolResponse.ok) {
+        throw new Error("No se pudo obtener el nombre del rol");
+      }
+
+      const rolData = await nombreRolResponse.json();
+      const userRole = rolData.nombre?.toLowerCase();
+
+      if (!userRole) {
+        throw new Error("Rol no definido");
+      }
+
+      console.log("✅ Rol obtenido:", userRole);
+
+      setMessage("Verificación exitosa");
+      onSuccess(userRole);
+    } catch (error) {
+      console.error("❌ Error en VerificationModal:", error);
+      setMessage("Error: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50 ">
+    <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-xl font-bold mb-4">Verificación de Código</h2>
         <p className="mb-4">
-          Se ha enviado un código de verificación a tu email. Por favor, ingrésalo
-          a continuación.
+          Se ha enviado un código de verificación a tu email. Por favor, ingrésalo a continuación.
         </p>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -56,9 +101,10 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              disabled={isLoading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70"
             >
-              Verificar
+              {isLoading ? "Verificando..." : "Verificar"}
             </button>
           </div>
         </form>

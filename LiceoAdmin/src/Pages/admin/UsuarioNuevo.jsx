@@ -11,9 +11,10 @@ export default function UsuarioCrear() {
     estado: "ACTIVO", // Valor por defecto
     email: "",
   });
-  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [message, setMessage] = useState("");
+  const [existente, setExistente] = useState("");
 
   const handleChange = (e) => {
     setForm({
@@ -24,7 +25,8 @@ export default function UsuarioCrear() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setMessage("");
+    setExistente("");
     setIsSubmitting(true);
 
     try {
@@ -37,12 +39,27 @@ export default function UsuarioCrear() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Error al crear usuario");
+
+        if (typeof errData === "object" && !Array.isArray(errData)) {
+          if (errData.message) {
+            // Error general tipo "ya existe"
+            setExistente(errData.message);
+          } else {
+           const messages = Object.values(errData).join("\n");
+
+            setMessage(messages);
+          }
+        } else {
+          setExistente("Error desconocido al crear usuario");
+        }
+
+        return; // no continues con navigate
       }
 
       navigate("/usuarios");
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      setExistente(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -53,27 +70,37 @@ export default function UsuarioCrear() {
       <div className="max-w-3xl mx-auto">
         <div className="bg-white shadow rounded-lg p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Crear Nuevo Usuario</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Crear Nuevo Usuario
+            </h2>
             <button
               onClick={() => navigate("/usuarios")}
               className="text-gray-500 hover:text-gray-700"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
-              <p>Error: {error}</p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="idUsuario" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="idUsuario"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   ID Usuario *
                 </label>
                 <input
@@ -89,7 +116,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="estado"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Estado *
                 </label>
                 <select
@@ -106,7 +136,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="nombres" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="nombres"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Nombres *
                 </label>
                 <input
@@ -122,7 +155,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="apellidos" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="apellidos"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Apellidos *
                 </label>
                 <input
@@ -138,7 +174,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="nickname"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Nickname *
                 </label>
                 <input
@@ -154,7 +193,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email *
                 </label>
                 <input
@@ -170,7 +212,10 @@ export default function UsuarioCrear() {
               </div>
 
               <div>
-                <label htmlFor="contrasena" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="contrasena"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Contraseña *
                 </label>
                 <input
@@ -197,12 +242,29 @@ export default function UsuarioCrear() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                {isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                {isSubmitting ? "Creando..." : "Crear Usuario"}
               </button>
             </div>
           </form>
+          {existente && (
+            <div className="mt-4 p-3 rounded-md bg-yellow-50 text-yellow-700">
+              <p className="text-sm font-medium">{existente}</p>
+            </div>
+          )}
+
+          {message && (
+            <div className="mt-4 p-3 rounded-md bg-red-50 text-red-700">
+              {message.split("\n").map((line, idx) => (
+                <p key={idx} className="text-sm">
+                  {line}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
