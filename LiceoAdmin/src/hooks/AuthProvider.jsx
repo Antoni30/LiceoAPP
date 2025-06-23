@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: false,
     userRole: null,
     isLoading: true, // Para manejar el estado de carga inicial
+    useCedula:null,
   });
   const navigate = useNavigate();
 
@@ -17,8 +18,8 @@ export function AuthProvider({ children }) {
     const checkAuth = () => {
       const storedAuth = localStorage.getItem('auth');
       if (storedAuth) {
-        const { isAuthenticated, userRole } = JSON.parse(storedAuth);
-        setAuthState({ isAuthenticated, userRole, isLoading: false });
+        const { isAuthenticated, userRole,useCedula } = JSON.parse(storedAuth);
+        setAuthState({ isAuthenticated, userRole, isLoading: false, useCedula });
       } else {
         setAuthState(prev => ({ ...prev, isLoading: false }));
       }
@@ -27,11 +28,12 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
 
-  const login = (role) => {
+  const login = (role,cedula) => {
     const newAuthState = {
       isAuthenticated: true,
       userRole: role,
       isLoading: false,
+      useCedula:cedula
     };
     setAuthState(newAuthState);
     localStorage.setItem('auth', JSON.stringify(newAuthState));
@@ -42,6 +44,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: false,
       userRole: null,
       isLoading: false,
+      useCedula:null
     });
     localStorage.removeItem('auth');
     navigate('/login');

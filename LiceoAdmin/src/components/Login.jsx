@@ -69,14 +69,14 @@ function Login() {
       const userRole = rolData.nombre.toLowerCase();
 
       // 5. Manejar redirección según rol
-      login(userRole); // Actualiza el estado de autenticación
+      login(userRole,idUsuario); // Actualiza el estado de autenticación
 
       switch (userRole) {
         case "administrador":
-          navigate("/dashboard");
+          navigate("/home");
           break;
         case "profesor":
-          navigate(`/profesor/${idUsuario}`);
+          navigate(`/home`);
           break;
         default:
           setMessage("Tu rol no tiene acceso al sistema");
@@ -197,11 +197,11 @@ function Login() {
               setIsLoading(false);
             }}
             onSuccess={(userRole) => {
-              login(userRole);
+              login(userRole,idUsuario);
               navigate(
                 userRole === "administrador"
-                  ? "/dashboard"
-                  : `/profesor/${idUsuario}`
+                  ? "/home"
+                  : `/home`
               );
             }}
           />

@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/AuthProvider";
 export default function NavbarProfesor() {
   const navigate = useNavigate();
   const location = useLocation();
-   const { logout } = useAuth();
+  const { logout } = useAuth();
 
   // Función para determinar si una ruta está activa
   const isActive = (path) => location.pathname === path;
@@ -14,7 +14,7 @@ export default function NavbarProfesor() {
       method: "POST",
       credentials: "include",
     }).finally(() => {
-      logout()
+      logout();
     });
   };
 
@@ -25,17 +25,22 @@ export default function NavbarProfesor() {
           <div className="flex space-x-8">
             {/* Logo o marca */}
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-indigo-600">Liceo Profesor</span>
+              <button
+                onClick={() => navigate("/home")}
+                className="text-xl font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+              >
+                Lice Profesor
+              </button>
             </div>
-            
+
             {/* Navegación principal */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <button
                 onClick={() => navigate("")}
                 className={`${
-                  isActive("") 
-                    ? 'border-indigo-500 text-gray-900' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  isActive("")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 Notas
@@ -43,9 +48,9 @@ export default function NavbarProfesor() {
               <button
                 onClick={() => navigate("")}
                 className={`${
-                  isActive("") 
-                    ? 'border-indigo-500 text-gray-900' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  isActive("")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 Generar Reporte
@@ -54,16 +59,16 @@ export default function NavbarProfesor() {
               <button
                 onClick={() => navigate("")}
                 className={`${
-                  isActive("") 
-                    ? 'border-indigo-500 text-gray-900' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  isActive("")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 Horario
               </button>
             </div>
           </div>
-          
+
           {/* Botón de logout */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <button
@@ -73,7 +78,7 @@ export default function NavbarProfesor() {
               Cerrar Sesión
             </button>
           </div>
-          
+
           {/* Menú móvil (icono hamburguesa) */}
           <div className="-mr-2 flex items-center sm:hidden">
             <button

@@ -9,6 +9,7 @@ function Dashboard() {
   const [filter, setFilter] = useState("todos"); // 'activos', 'inactivos', 'todos'
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   const [editAnio, setEditAnio] = useState({
     id: null,
     fechaInicio: "",
@@ -152,6 +153,21 @@ function Dashboard() {
   const handleAddYears = () => {
     navigate(`/agregarAnio`);
   };
+
+    if (error)
+      return (
+        <>
+          <Navbar />
+          <div className="p-4 text-red-600"> Error: {error}</div>;
+        </>
+      );
+    if (isLoading)
+      return (
+        <>
+          <Navbar />
+          <div className="p-4">Cargando Años Lectivos...</div>;
+        </>
+      );
 
   return (
     <>

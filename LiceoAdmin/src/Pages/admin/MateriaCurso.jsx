@@ -5,12 +5,14 @@ import Navbar from "../../components/Nabvar";
 function MateriasDelCurso() {
   const { idCurso } = useParams();
   const navigate = useNavigate();
-  const [allMaterias, setAllMaterias] = useState([]); // Todas las materias disponibles
+  const [allMaterias, setAllMaterias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [materiaSeleccionada, setMateriaSeleccionada] = useState(""); // Materia seleccionada para agregar
-  const [materiasExistentes, setMateriasExistentes] = useState([]); // Materias que ya están asignadas al curso
-  const [showCreateModal, setShowCreateModal] = useState(false); // Control del modal de agregar materia
+  const [materiaSeleccionada, setMateriaSeleccionada] = useState("");
+  const [materiasExistentes, setMateriasExistentes] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [materiaToDelete, setMateriaToDelete] = useState(null);
 
   useEffect(() => {
     fetchMateriasCurso();
@@ -18,7 +20,6 @@ function MateriasDelCurso() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idCurso]);
 
-  // Obtener las materias ya asignadas al curso
   const fetchMateriasCurso = async () => {
     setIsLoading(true);
     try {
@@ -40,7 +41,6 @@ function MateriasDelCurso() {
     }
   };
 
-  // Obtener todas las materias disponibles
   const fetchMateriasDisponibles = async () => {
     setIsLoading(true);
     try {
@@ -59,9 +59,7 @@ function MateriasDelCurso() {
     }
   };
 
-  // Función para agregar una materia al curso
   const handleAddMateria = async () => {
-    // Verifica si la materia ya está asignada al curso
     if (materiasExistentes.find((materia) => materia.idMateria === materiaSeleccionada)) {
       setError("Esta materia ya está asignada al curso.");
       return;
@@ -83,10 +81,9 @@ function MateriasDelCurso() {
 
       if (!response.ok) throw new Error("Error al agregar la materia");
 
-      // Recargar las materias del curso después de agregar
       fetchMateriasCurso();
-      setMateriaSeleccionada(""); // Limpiar la selección
-      setShowCreateModal(false); // Cerrar el modal
+      setMateriaSeleccionada("");
+      setShowCreateModal(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,14 +91,21 @@ function MateriasDelCurso() {
     }
   };
 
-  // Función para eliminar una materia del curso
-  const handleDeleteMateria = async (idMateria) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta materia del curso?")) return;
+  const openDeleteModal = (idMateria) => {
+    setMateriaToDelete(idMateria);
+    setShowDeleteModal(true);
+  };
 
+  const closeDeleteModal = () => {
+    setMateriaToDelete(null);
+    setShowDeleteModal(false);
+  };
+
+  const handleDeleteMateria = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/cursos-materias/curso/${idCurso}/materia/${idMateria}`,
+        `http://localhost:8080/api/cursos-materias/curso/${idCurso}/materia/${materiaToDelete}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -110,8 +114,8 @@ function MateriasDelCurso() {
 
       if (!response.ok) throw new Error("Error al eliminar la materia");
 
-      // Recargar las materias del curso después de eliminar
       fetchMateriasCurso();
+      closeDeleteModal();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -119,7 +123,6 @@ function MateriasDelCurso() {
     }
   };
 
-  // Filtrar las materias disponibles para que no se muestren las ya asignadas
   const materiasDisponiblesFiltradas = allMaterias.filter(
     (materia) => !materiasExistentes.some((materiaExistente) => materiaExistente.idMateria === materia.id)
   );
@@ -234,7 +237,6 @@ function MateriasDelCurso() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {materiasExistentes.map((materia) => {
-                      // Encuentra el nombre de la materia con el idMateria
                       const materiaNombre = allMaterias.find(
                         (m) => m.id === materia.idMateria
                       )?.nombreMateria;
@@ -248,7 +250,7 @@ function MateriasDelCurso() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button
-                              onClick={() => handleDeleteMateria(materia.idMateria)}
+                              onClick={() => openDeleteModal(materia.idMateria)}
                               className="text-red-600 hover:text-red-900"
                             >
                               Eliminar
@@ -267,7 +269,7 @@ function MateriasDelCurso() {
 
       {/* Modal para agregar materia */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-amber-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">Agregar Materia</h2>
@@ -312,6 +314,46 @@ function MateriasDelCurso() {
                 disabled={isLoading || !materiaSeleccionada}
               >
                 {isLoading ? "Agregando..." : "Agregar Materia"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para confirmar eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Confirmar Eliminación</h2>
+              <button
+                onClick={closeDeleteModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-700">
+                ¿Estás seguro de que deseas eliminar esta materia del curso? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteMateria}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                disabled={isLoading}
+              >
+                {isLoading ? "Eliminando..." : "Eliminar"}
               </button>
             </div>
           </div>

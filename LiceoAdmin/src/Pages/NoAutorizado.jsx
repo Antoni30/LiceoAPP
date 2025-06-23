@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 function NoAutorizado() {
   const { userRole, logout } = useAuth();
+  const { useCedula } = useAuth();
 
   const getRoleName = () => {
     switch(userRole?.toLowerCase()) {
@@ -41,10 +42,10 @@ function NoAutorizado() {
         </p>
 
         <div className="space-y-3">
-          {userRole ? (
+          {userRole? (
             <>
               <Link
-                to={userRole.toLowerCase() === 'administrador' ? '/dashboard' : '/profesor'}
+                to={userRole.toLowerCase() === 'administrador' ? '/home' :`/profesor/${useCedula}`}
                 className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
               >
                 Ir a mi área de trabajo
