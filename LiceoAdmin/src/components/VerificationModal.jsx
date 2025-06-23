@@ -24,7 +24,6 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
         throw new Error(data.message || "Verificación fallida");
       }
 
-      // ✅ Obtener roles del usuario
       const rolResponse = await fetch(
         `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
         { credentials: "include" }
@@ -35,7 +34,6 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
       }
 
       const roles = await rolResponse.json();
-
       if (!roles || roles.length === 0) {
         throw new Error("El usuario no tiene roles asignados");
       }
@@ -58,8 +56,6 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
         throw new Error("Rol no definido");
       }
 
-      console.log("✅ Rol obtenido:", userRole);
-
       setMessage("Verificación exitosa");
       onSuccess(userRole);
     } catch (error) {
@@ -71,12 +67,15 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-amber-50 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-xl font-bold mb-4">Verificación de Código</h2>
-        <p className="mb-4">
-          Se ha enviado un código de verificación a tu email. Por favor, ingrésalo a continuación.
+    <div className="fixed inset-0 bg-white bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full border border-blue-100">
+        <h2 className="text-2xl font-semibold text-blue-800 tracking-wide mb-4 text-center">
+          Verificación de Código
+        </h2>
+        <p className="mb-4 text-sm text-gray-600 text-center">
+          Se ha enviado un código de verificación a tu correo institucional. Ingrésalo para continuar.
         </p>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="code" className="block text-sm font-medium text-gray-700">
@@ -86,35 +85,39 @@ function VerificationModal({ idUsuario, onClose, onSuccess }) {
               id="code"
               type="text"
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-400 focus:border-yellow-500"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
           </div>
-          <div className="flex justify-end space-x-3">
+
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70"
+              className="px-4 py-2 bg-yellow-400 text-white font-medium rounded-md hover:bg-yellow-500 transition disabled:opacity-70"
             >
               {isLoading ? "Verificando..." : "Verificar"}
             </button>
           </div>
         </form>
+
         {message && (
           <div
-            className={`mt-4 p-2 rounded-md ${
-              message.includes("Error") ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
+            className={`mt-4 p-2 rounded-md text-sm ${
+              message.includes("Error")
+                ? "bg-red-50 text-red-700"
+                : "bg-green-50 text-green-700"
             }`}
           >
-            <p className="text-sm">{message}</p>
+            {message}
           </div>
         )}
       </div>
