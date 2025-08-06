@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../components/Nabvar";
+import { useApi } from "../../hooks/useApi";
+import apiService from "../../services/apiService";
+import { ErrorMessage, Button, Modal, Table } from "../../components/UI";
 
 function Materias() {
   const [materias, setMaterias] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
   const [editMateria, setEditMateria] = useState(null);
   const [nombreMateriaEdit, setNombreMateriaEdit] = useState("");
@@ -12,6 +13,7 @@ function Materias() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [materiaToDelete, setMateriaToDelete] = useState(null);
   const [newMateria, setNewMateria] = useState("");
+  const { loading: isLoading, error, executeRequest, clearError } = useApi();
 
   useEffect(() => {
     setMessage("");
@@ -20,20 +22,13 @@ function Materias() {
 
   const fetchMaterias = async () => {
     setMessage("");
-    setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/materias", {
-        credentials: "include",
+      await executeRequest(async () => {
+        const data = await apiService.getMaterias();
+        setMaterias(data);
       });
-
-      if (!response.ok) throw new Error("Error al cargar las materias");
-
-      const data = await response.json();
-      setMaterias(data);
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching materias:', err);
     }
   };
 
@@ -152,25 +147,16 @@ function Materias() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">
               Gestión de Materias
             </h1>
-            <button
+            <Button 
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center"
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              }
             >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
               Nueva Materia
-            </button>
+            </Button>
           </div>
 
           {isLoading ? (

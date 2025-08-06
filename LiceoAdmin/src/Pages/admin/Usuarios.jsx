@@ -1,53 +1,45 @@
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Nabvar";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Nabvar";
+import { useApi } from "../../hooks/useApi";
+import apiService from "../../services/apiService";
+import { ErrorMessage, Button, SearchInput, Table } from "../../components/UI";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
-  const [error, setError] = useState(null);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const [loading, setLoading] = useState(true);
   const [searchId, setSearchId] = useState("");
   const [userRol, setUserRol] = useState({});
-  const navigate = useNavigate();
   const [sendingState, setSendingState] = useState({});
+  const { loading, error, executeRequest, clearError } = useApi();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/usuarios", {
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al obtener usuarios");
-        return res.json();
-      })
-      .then((data) => {
-        setUsuarios(data);
-        setFilteredUsuarios(data);
-        fetchRolesForUsers(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+    const fetchUsers = async () => {
+      try {
+        await executeRequest(async () => {
+          const data = await apiService.getUsers();
+          setUsuarios(data);
+          setFilteredUsuarios(data);
+          fetchRolesForUsers(data);
+        });
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+
+    fetchUsers();
+  }, [executeRequest]);
 
   const fetchRolesForUsers = async (users) => {
     const rolesMap = {};
 
     for (const user of users) {
       try {
-        const response = await fetch(
-          `http://localhost:8080/api/usuarios-roles/usuario/${user.idUsuario}`,
-          { credentials: "include" }
-        );
-
-        if (response.ok) {
-          const rolesData = await response.json();
-          if (rolesData.length > 0) {
-            rolesMap[user.idUsuario] = rolesData[0].idRol;
-          }
+        const rolesData = await apiService.getUserRoles(user.idUsuario);
+        if (rolesData.length > 0) {
+          rolesMap[user.idUsuario] = rolesData[0].idRol;
         }
       } catch (error) {
         console.error(
@@ -83,49 +75,26 @@ export default function Usuarios() {
   const handleRenviar = async (nickname, email) => {
     setSendingState((prev) => ({ ...prev, [nickname]: true }));
     try {
-      setMessage(""); // Limpiar mensajes anteriores
-      const payload = {
-        nickname: nickname,
-        email: email,
-      };
-
-      const response = await fetch(
-        `http://localhost:8080/api/auth/resend-verification-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await response.json(); // Siempre parsear la respuesta JSON
-
-      if (!response.ok) {
-        // Manejar errores 400, 404, etc.
-        throw new Error(data.message || "Error al re-enviar el correo");
-      }
+      setMessage("");
+      const data = await apiService.resendVerificationEmail(nickname, email);
 
       setTimeout(() => {
         setSendingState((prev) => ({ ...prev, [nickname]: false }));
       }, 2000);
 
-       setTimeout(() => {
-        setMessage("")
+      setTimeout(() => {
+        setMessage("");
       }, 4000);
-      // Éxito (código 200)
+
       setMessage({
-        text: data.message +" a "+ nickname || "Correo de verificación reenviado " + email,
+        text: data.message + " a " + nickname || "Correo de verificación reenviado " + email,
         type: "success",
       });
     } catch (err) {
-      // Manejar diferentes tipos de errores
       setMessage({
         text: err.message || "Ocurrió un error inesperado",
         type: "error",
       });
-    } finally {
-      setLoading(false); // Desactivar estado de carga
     }
   };
 
@@ -143,61 +112,41 @@ export default function Usuarios() {
     }
   };
 
-  if (error)
+  const handleClearSearch = () => {
+    setSearchId("");
+    setFilteredUsuarios(usuarios);
+  };
+
+  if (error) {
     return (
       <>
         <Navbar />
-        <div className="p-4 text-red-600"> Error: {error}</div>;
+        <div className="p-4">
+          <ErrorMessage message={error} onClose={clearError} />
+        </div>
       </>
     );
-  if (loading)
+  }
+  
+  if (loading) {
     return (
       <>
         <Navbar />
-        <div className="p-4">Cargando usuarios...</div>;
+        <div className="p-4">Cargando usuarios...</div>
       </>
     );
+  }
 
   return (
     <>
       <Navbar />
       {message.text && (
-        <div
-          className={`p-4 mb-4 rounded-md absolute  top-0 right-0 ${
-            message.type === "success"
-              ? "bg-green-700 text-white border border-green-200"
-              : "bg-red-700 text-white border border-red-200"
-          }`}
-        >
-          <div className="flex items-center">
-            {message.type === "success" ? (
-              <svg
-                className="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="h-5 w-5 text-red-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-            <p>{message.text}</p>
-          </div>
-        </div>
+        <ErrorMessage 
+          message={message.text} 
+          type={message.type} 
+          autoHide={true}
+          onClose={() => setMessage({ text: "", type: "" })}
+        />
       )}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -206,36 +155,17 @@ export default function Usuarios() {
           </h2>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <input
-                type="text"
-                placeholder="Buscar por ID"
-                value={searchId}
-                onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
+            <SearchInput
+              value={searchId}
+              onChange={handleSearch}
+              placeholder="Buscar por ID"
+              onClear={handleClearSearch}
+              className="w-full sm:w-64"
+            />
 
-            <button
-              onClick={() => navigate("/usuario/nuevo")}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-200 whitespace-nowrap"
-            >
+            <Button onClick={() => navigate("/usuario/nuevo")}>
               Nuevo Usuario
-            </button>
+            </Button>
           </div>
         </div>
 

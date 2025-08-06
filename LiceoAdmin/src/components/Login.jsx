@@ -1,92 +1,65 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
+import { useApi } from "../hooks/useApi";
+import apiService from "../services/apiService";
 import VerificationModal from "./VerificationModal";
+import { ErrorMessage, Button } from "./UI";
 import logo from "../assets/logo.png";
 
 function Login() {
   const { login } = useAuth();
+  const { loading, error, executeRequest, clearError } = useApi();
   const [idUsuario, setIdUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [message, setMessage] = useState("");
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
-    setIsLoading(true);
+    clearError();
 
     try {
-      // 1. Intento de autenticación
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idUsuario, contrasena }),
-        credentials: "include",
+      await executeRequest(async () => {
+        // 1. Intento de autenticación
+        const data = await apiService.login(idUsuario, contrasena);
+
+        // 2. Si requiere verificación
+        if (data["success"] === false) {
+          setShowVerificationModal(true);
+          return;
+        }
+
+        // 3. Obtener información del usuario (roles)
+        const roles = await apiService.getUserRoles(idUsuario);
+
+        if (roles.length === 0) {
+          throw new Error("Estado: Pendiente de asignación de rol por parte del administrador.");
+        }
+
+        // 4. Obtener nombre del rol
+        const rolData = await apiService.getRole(roles[0].idRol);
+        const userRole = rolData.nombre.toLowerCase();
+
+        // 5. Manejar redirección según rol
+        login(userRole, idUsuario);
+
+        switch (userRole) {
+          case "administrador":
+            navigate("/home");
+            break;
+          case "profesor":
+            navigate(`/home`);
+            break;
+          default:
+            setMessage("Tu rol no tiene acceso al sistema");
+            break;
+        }
       });
-
-      const data = await response.json();
-
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error en la autenticación");
-      }
-
-      // 2. Si requiere verificación
-      if (data["success"] === false) {
-        setShowVerificationModal(true);
-        return;
-      }
-
-      // 3. Obtener información del usuario (roles)
-      const rolResponse = await fetch(
-        `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
-        { credentials: "include" }
-      );
-
-      if (!rolResponse.ok) {
-        throw new Error("El rol de usuario aún no ha sido asignado por el administrador del sistema.");
-      }
-
-      const roles = await rolResponse.json();
-
-      if (roles.length === 0) {
-        throw new Error("Estado: Pendiente de asignación de rol por parte del administrador.");
-      }
-
-      // 4. Obtener nombre del rol
-      const nombreRolResponse = await fetch(
-        `http://localhost:8080/api/roles/${roles[0].idRol}`,
-        { credentials: "include" }
-      );
-
-      if (!nombreRolResponse.ok) {
-        throw new Error("No se pudo obtener el nombre del rol");
-      }
-
-      const rolData = await nombreRolResponse.json();
-      const userRole = rolData.nombre.toLowerCase();
-
-      // 5. Manejar redirección según rol
-      login(userRole,idUsuario); // Actualiza el estado de autenticación
-
-      switch (userRole) {
-        case "administrador":
-          navigate("/home");
-          break;
-        case "profesor":
-          navigate(`/home`);
-          break;
-        default:
-          setMessage("Tu rol no tiene acceso al sistema");
-          break;
-      }
     } catch (error) {
       setMessage(error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -134,47 +107,31 @@ function Login() {
       </div>
 
       <div>
-        <button
+        <Button
           type="submit"
-          disabled={isLoading}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition ${
-            isLoading ? "opacity-75 cursor-not-allowed" : ""
-          }`}
+          loading={loading}
+          disabled={loading}
+          className="w-full bg-yellow-400 hover:bg-yellow-500 text-white"
         >
-          {isLoading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Procesando...
-            </>
-          ) : (
-            "Ingresar"
-          )}
-        </button>
+          Ingresar
+        </Button>
       </div>
     </form>
 
-    {message && (
-      <div className={`mt-4 p-3 rounded-md ${
-        message.includes("Error") || message.includes("no tiene acceso")
-          ? "bg-red-100 text-red-800"
-          : "bg-green-100 text-green-800"
-      }`}>
-        <p className="text-sm font-medium">{message}</p>
-        {message.includes("no tiene acceso") && (
-          <p className="mt-1 text-xs">
-            Solo usuarios con rol de Administrador o Profesor pueden acceder al sistema.
-          </p>
-        )}
+    <ErrorMessage 
+      message={error || message} 
+      type={error ? "error" : message.includes("Error") || message.includes("no tiene acceso") ? "error" : "success"}
+      onClose={() => {
+        clearError();
+        setMessage("");
+      }}
+    />
+    
+    {message && message.includes("no tiene acceso") && (
+      <div className="mt-2 p-2 rounded-md bg-gray-100 text-gray-700">
+        <p className="text-xs">
+          Solo usuarios con rol de Administrador o Profesor pueden acceder al sistema.
+        </p>
       </div>
     )}
 
@@ -183,7 +140,6 @@ function Login() {
         idUsuario={idUsuario}
         onClose={() => {
           setShowVerificationModal(false);
-          setIsLoading(false);
         }}
         onSuccess={(userRole) => {
           login(userRole, idUsuario);

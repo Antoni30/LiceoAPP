@@ -1,72 +1,54 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/AuthProvider";
+import { useApi } from "../hooks/useApi";
+import apiService from "../services/apiService";
 import Navbar from "../components/Nabvar";
+import NavbarProfesor from "../components/NabvarProfesor";
+import { ErrorMessage } from "../components/UI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faEnvelope, faIdCard, faPen, faShieldAlt, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import NavbarProfesor from "../components/NabvarProfesor";
 
 export default function Perfil() {
-  const { useCedula,userRole } = useAuth();
+  const { useCedula, userRole } = useAuth();
   const navigate = useNavigate();
+  const { loading, error, executeRequest, clearError } = useApi();
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/usuarios/${useCedula}`, {
-          credentials: "include",
+        await executeRequest(async () => {
+          const data = await apiService.getUser(useCedula);
+          setUserData(data);
         });
-
-        if (!response.ok) {
-          throw new Error("No se pudo obtener la información del usuario");
-        }
-
-        const data = await response.json();
-        setUserData(data);
       } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching user data:', err);
       }
     };
 
     fetchUserData();
-  }, [useCedula]);
+  }, [useCedula, executeRequest]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
+      <>
+        {userRole === 'administrador' ? <Navbar /> : <NavbarProfesor />}
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 mx-auto max-w-md mt-8">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg
-              className="h-5 w-5 text-red-500"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
+      <>
+        {userRole === 'administrador' ? <Navbar /> : <NavbarProfesor />}
+        <div className="mx-auto max-w-md mt-8">
+          <ErrorMessage message={error} onClose={clearError} />
         </div>
-      </div>
+      </>
     );
   }
 
@@ -80,7 +62,7 @@ export default function Perfil() {
 
   return (
     <>
-    {userRole ==='adminstrador'?<Navbar />: <NavbarProfesor/>}
+      {userRole === 'administrador' ? <Navbar /> : <NavbarProfesor />}
       
       <div className="min-h-screen bg-gray-100 py-10 px-4">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">

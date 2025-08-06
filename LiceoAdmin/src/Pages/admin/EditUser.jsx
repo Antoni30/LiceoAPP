@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useApi } from "../../hooks/useApi";
+import apiService from "../../services/apiService";
+import { ErrorMessage, Button } from "../../components/UI";
 
 export default function EditarUsuario() {
   const { id } = useParams();
@@ -13,47 +16,33 @@ export default function EditarUsuario() {
     estado: "ACTIVO",
     mfaHabilitado: false,
   });
-  const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [existente, setExistente] = useState("");
+  const { loading, error, executeRequest, clearError } = useApi();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setMessage("");
     const fetchUsuario = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:8080/api/usuarios/${id}`,
-          {
-            credentials: "include",
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Error al obtener los datos del usuario");
-        }
-
-        const data = await response.json();
-
-        setForm({
-          nombres: data.nombres,
-          apellidos: data.apellidos,
-          nickname: data.nickname,
-          estado: data.estado,
-          // eslint-disable-next-line no-constant-binary-expression
-          mfaHabilitado: data.mfaHabilitado ?? !!data.mfaSecret ?? false,
-          // Guardamos estos campos aunque no los mostremos
-          email: data.email,
-          emailVerificado: data.emailVerificado,
+        await executeRequest(async () => {
+          const data = await apiService.getUser(id);
+          setForm({
+            nombres: data.nombres,
+            apellidos: data.apellidos,
+            nickname: data.nickname,
+            estado: data.estado,
+            mfaHabilitado: data.mfaHabilitado ?? !!data.mfaSecret ?? false,
+            email: data.email,
+            emailVerificado: data.emailVerificado,
+          });
         });
-        setLoading(false);
       } catch (err) {
-        setError(err.message);
-        setLoading(false);
+        console.error('Error fetching user:', err);
       }
     };
 
     fetchUsuario();
-  }, [id]);
+  }, [id, executeRequest]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -68,59 +57,48 @@ export default function EditarUsuario() {
     setIsSubmitting(true);
     setExistente("");
     setMessage("");
-    setError(null);
+    clearError();
 
     try {
-      // Preparamos el payload exactamente como lo espera el backend
       const payload = {
         nombres: form.nombres,
         apellidos: form.apellidos,
         nickname: form.nickname,
         estado: form.estado,
         mfaHabilitado: form.mfaHabilitado ?? false,
-        // Estos campos deben ir null aunque no se editen
         roles: null,
-        email: form.email, // Si el email viene del form original
-        emailVerificado: form.emailVerificado, // Si viene del form original
+        email: form.email,
+        emailVerificado: form.emailVerificado,
       };
 
-      const response = await fetch(`http://localhost:8080/api/usuarios/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-
-        if (typeof errData === "object" && !Array.isArray(errData)) {
-          if (errData.message) {
-            // Error general tipo "ya existe"
-            setExistente(errData.message);
-          } else {
-           const messages = Object.values(errData).join("\n");
-
-            setMessage(messages);
-          }
-        } else {
-          setExistente("Error desconocido al crear usuario");
-        }
-
-        return; // no continues con navigate
-      }
-
+      await apiService.updateUser(id, payload);
       navigate(-1);
     } catch (err) {
-      setMessage(err.message);
-      setExistente(err.message);
+      if (err.message.includes("ya existe")) {
+        setExistente(err.message);
+      } else {
+        setMessage(err.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-4">Cargando datos del usuario...</div>;
-  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="p-4">
+        <ErrorMessage message={error} onClose={clearError} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -268,38 +246,42 @@ export default function EditarUsuario() {
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => navigate(-1)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                loading={isSubmitting}
                 disabled={isSubmitting}
-                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
               >
-                {isSubmitting ? "Guardando..." : "Guardar Cambios"}
-              </button>
+                Guardar Cambios
+              </Button>
             </div>
           </form>
            {existente && (
-            <div className="mt-4 p-3 rounded-md bg-yellow-50 text-yellow-700">
-              <p className="text-sm font-medium">{existente}</p>
-            </div>
+            <ErrorMessage 
+              message={existente} 
+              type="warning" 
+              onClose={() => setExistente("")} 
+            />
           )}
 
           {message && (
-            <div className="mt-4 p-3 rounded-md bg-red-50 text-red-700">
-              {message.split("\n").map((line, idx) => (
-                <p key={idx} className="text-sm">
-                  {line}
-                </p>
-              ))}
-            </div>
+            <ErrorMessage 
+              message={message} 
+              onClose={() => setMessage("")} 
+            />
+          )}
+          
+          {error && (
+            <ErrorMessage 
+              message={error} 
+              onClose={clearError} 
+            />
           )}
         </div>
       </div>
