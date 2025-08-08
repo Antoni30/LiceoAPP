@@ -1,22 +1,29 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
 import logo from "../assets/logo.png";
+import apiService from "../services/apiService";
+import { useState, useEffect } from "react";
 
 export default function NavbarProfesor() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user, useCedula } = useAuth();
+  const [idProfesor, setIdProfesor] = useState(null);
+
+  useEffect(() => {
+    if (user?.idUsuario) {
+      setIdProfesor(user.idUsuario);
+    }
+  }, [user]);
 
   // Función para determinar si una ruta está activa
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path);
 
   const handleLogout = () => {
-    fetch("http://localhost:8080/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    }).finally(() => {
-      logout();
-    });
+    apiService.logout()
+      .finally(() => {
+        logout();
+      });
   };
 
   return (
@@ -40,20 +47,11 @@ export default function NavbarProfesor() {
 
         {/* Navegación */}
         <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+      
           <button
-            onClick={() => navigate("/notas")}
+            onClick={() => navigate(`/profesor/generar-reporte/${useCedula}`)}
             className={`${
-              isActive("/notas")
-                ? "border-yellow-400 text-gray-900"
-                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-            } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-          >
-            Notas
-          </button>
-          <button
-            onClick={() => navigate("/reporte")}
-            className={`${
-              isActive("/reporte")
+              isActive("/profesor/generar-reporte")
                 ? "border-yellow-400 text-gray-900"
                 : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
             } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}

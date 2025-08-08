@@ -1,9 +1,11 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import NavbarProfesor from "../../components/NabvarProfesor";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../hooks/AuthProvider";
+import apiService from "../../services/apiService";
 
 export default function ProfesorPerfil() {
   const { idProfesor } = useParams();
@@ -18,6 +20,8 @@ export default function ProfesorPerfil() {
   const [showFormEstudiante, setShowFormEstudiante] = useState(false);
   const { logout } = useAuth();
   const [guardando, setGuardando] = useState(false);
+  const [promediosParciales, setPromediosParciales] = useState({ 1: "S/N", 2: "S/N", 3: "S/N" });
+  const [promedioGeneral, setPromedioGeneral] = useState("S/N");
   const navigator = useNavigate()
   const [nuevoEstudiante, setNuevoEstudiante] = useState({
     idUsuario: "",
@@ -30,30 +34,18 @@ export default function ProfesorPerfil() {
   });
 
   const handleLogout = () => {
-    fetch("http://localhost:8080/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    }).finally(() => {
-      logout();
-    });
+    apiService.logout()
+      .finally(() => {
+        logout();
+      });
   };
 
   const fetchData = async () => {
     try {
-      const resProf = await fetch(
-        `http://localhost:8080/api/usuarios/${idProfesor}`,
-        { credentials: "include" }
-      );
-      if (!resProf.ok) throw new Error("No se pudo cargar el profesor");
-      const profData = await resProf.json();
+      const profData = await apiService.getUser(idProfesor);
       setProfesor(profData);
 
-      const resCursos = await fetch(
-        `http://localhost:8080/api/usuarios-cursos/usuario/${idProfesor}`,
-        { credentials: "include" }
-      );
-      if (!resCursos.ok) throw new Error("No se pudo cargar el curso");
-      const cursos = await resCursos.json();
+      const cursos = await apiService.getUserCursos(idProfesor);
       if (!cursos.length)
         throw new Error(
           "Profesor disponible (sin cursos asignados) - Requiere acción administrativa"
@@ -61,51 +53,112 @@ export default function ProfesorPerfil() {
       const cursoId = cursos[0].idCurso;
       setIdCurso(cursoId);
 
-      const nombreCurso = await fetch(
-        `http://localhost:8080/api/cursos/${cursoId}`,
-        { credentials: "include" }
-      );
-      const nombreCursoRespond = await nombreCurso.json();
+      const nombreCursoRespond = await apiService.getCurso(cursoId);
       setNombreCurso(nombreCursoRespond.nombreCurso);
 
-      const resUsuCursos = await fetch(
-        `http://localhost:8080/api/usuarios-cursos/curso/${cursoId}`,
-        { credentials: "include" }
-      );
-      if (!resUsuCursos.ok)
-        throw new Error("No se pudieron cargar los usuarios del curso");
-      const usuCursos = await resUsuCursos.json();
+      const usuCursos = await apiService.getCursoUsuarios(cursoId);
 
       const estudiantesFiltrados = [];
+      const notasPorParcial = { 1: [], 2: [], 3: [] };
+      
+      // Obtener materias del curso para calcular promedios correctamente
+      const materiasDelCurso = await apiService.getCursoMaterias(cursoId);
+      
       for (const { idUsuario } of usuCursos) {
-        const resRol = await fetch(
-          `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
-          { credentials: "include" }
-        );
-        if (!resRol.ok) continue;
-        const roles = await resRol.json();
+        try {
+          const roles = await apiService.getUserRoles(idUsuario);
         const tieneRolEstudiante = roles.some((r) => r.idRol === 3);
         if (!tieneRolEstudiante) continue;
 
-        const resUsu = await fetch(
-          `http://localhost:8080/api/usuarios/${idUsuario}`,
-          { credentials: "include" }
-        );
-        if (!resUsu.ok) continue;
-        const usuario = await resUsu.json();
+          const usuario = await apiService.getUser(idUsuario);
 
-        estudiantesFiltrados.push({
-          idUsuario,
-          nombres: usuario.nombres,
-          apellidos: usuario.apellidos,
-          nota1: "",
-          nota2: "",
-          nota3: "",
-          promedio: "",
-        });
+          // Obtener todas las notas del estudiante por materia y calcular promedios por parcial
+          const notasParciales = { 1: "S/N", 2: "S/N", 3: "S/N" };
+          
+          for (let parcial = 1; parcial <= 3; parcial++) {
+            const notasDelParcial = [];
+            
+            for (const materia of materiasDelCurso) {
+              try {
+                const notasMateria = await apiService.getNotasByUsuarioMateria(idUsuario, materia.idMateria);
+                if (notasMateria && Array.isArray(notasMateria)) {
+                  const notaParcial = notasMateria.find(n => n.parcial === parcial);
+                  if (notaParcial) {
+                    notasDelParcial.push(parseFloat(notaParcial.nota));
+                  } else {
+                    notasDelParcial.push(0); // S/N como 0
+                  }
+                } else {
+                  notasDelParcial.push(0); // S/N como 0
+                }
+              } catch (err) {
+                notasDelParcial.push(0); // S/N como 0
+              }
+            }
+            
+            // Calcular promedio del parcial
+            if (notasDelParcial.length > 0) {
+              const suma = notasDelParcial.reduce((total, nota) => total + nota, 0);
+              const promedio = suma / notasDelParcial.length;
+              notasParciales[parcial] = promedio.toFixed(2);
+              notasPorParcial[parcial].push(promedio);
+            } else {
+              notasPorParcial[parcial].push(0);
+            }
+          }
+
+          // Calcular promedio general del estudiante (promedio de los 3 parciales)
+          const notasConvertidas = [notasParciales[1], notasParciales[2], notasParciales[3]]
+            .map(n => n === "S/N" ? 0 : parseFloat(n));
+          const notasValidas = notasConvertidas.filter(n => !isNaN(n));
+          
+          let promedioEstudiante = "S/N";
+          if (notasValidas.length > 0) {
+            const suma = notasValidas.reduce((total, nota) => total + nota, 0);
+            promedioEstudiante = (suma / notasValidas.length).toFixed(2);
+          }
+
+          estudiantesFiltrados.push({
+            idUsuario,
+            nombres: usuario.nombres,
+            apellidos: usuario.apellidos,
+            nota1: notasParciales[1],
+            nota2: notasParciales[2],
+            nota3: notasParciales[3],
+            promedio: promedioEstudiante,
+          });
+        } catch (userErr) {
+          // Error obteniendo datos del usuario, continuar
+          continue;
+        }
+      }
+
+      // Calcular promedios por parcial del curso
+      const promediosParcialCalculados = {};
+      for (let parcial = 1; parcial <= 3; parcial++) {
+        const notasDelParcial = notasPorParcial[parcial].filter(n => !isNaN(n));
+        if (notasDelParcial.length > 0) {
+          const suma = notasDelParcial.reduce((total, nota) => total + nota, 0);
+          promediosParcialCalculados[parcial] = (suma / notasDelParcial.length).toFixed(2);
+        } else {
+          promediosParcialCalculados[parcial] = "S/N";
+        }
+      }
+
+      // Calcular promedio general del curso
+      const promediosEstudiantes = estudiantesFiltrados
+        .map(e => e.promedio === "S/N" ? 0 : parseFloat(e.promedio))
+        .filter(p => !isNaN(p));
+      
+      let promedioGeneralCalculado = "S/N";
+      if (promediosEstudiantes.length > 0) {
+        const suma = promediosEstudiantes.reduce((total, promedio) => total + promedio, 0);
+        promedioGeneralCalculado = (suma / promediosEstudiantes.length).toFixed(2);
       }
 
       setEstudiantes(estudiantesFiltrados);
+      setPromediosParciales(promediosParcialCalculados);
+      setPromedioGeneral(promedioGeneralCalculado);
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -134,49 +187,13 @@ export default function ProfesorPerfil() {
     setGuardando(true);
     try {
       // 1. Crear usuario
-      const resUsuario = await fetch("http://localhost:8080/api/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(nuevoEstudiante),
-      });
-
-      if (!resUsuario.ok) {
-        const errData = await resUsuario.json();
-
-        if (typeof errData === "object" && !Array.isArray(errData)) {
-          if (errData.message) {
-            // Error general tipo "ya existe"
-            setExistente(errData.message);
-          } else {
-            const messages = Object.values(errData).join("\n -");
-            setMessage(messages);
-          }
-        } else {
-          setExistente("Error desconocido al crear usuario");
-        }
-
-        return; // no continues con navigate
-      }
+      await apiService.createUser(nuevoEstudiante);
 
       // 2. Asignar rol estudiante (idRol = 3)
-      await fetch("http://localhost:8080/api/usuarios-roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          idUsuario: nuevoEstudiante.idUsuario,
-          idRol: 3,
-        }),
-      });
+      await apiService.assignUserRole(nuevoEstudiante.idUsuario, 3);
 
       // 3. Asignar a curso
-      await fetch("http://localhost:8080/api/usuarios-cursos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idUsuario: nuevoEstudiante.idUsuario, idCurso }),
-      });
+      await apiService.createUsuarioCurso(nuevoEstudiante.idUsuario, idCurso);
 
       setShowFormEstudiante(false); // cerrar modal
       setNuevoEstudiante({
@@ -190,7 +207,22 @@ export default function ProfesorPerfil() {
       });
       await fetchData();
     } catch (err) {
-      setExistente(err.message);
+      if (err.response && err.response.data) {
+        const errData = err.response.data;
+        if (typeof errData === "object" && !Array.isArray(errData)) {
+          if (errData.message) {
+            // Error general tipo "ya existe"
+            setExistente(errData.message);
+          } else {
+            const messages = Object.values(errData).join("\n -");
+            setMessage(messages);
+          }
+        } else {
+          setExistente("Error desconocido al crear usuario");
+        }
+      } else {
+        setExistente(err.message);
+      }
     } finally {
       setGuardando(false); // <-- terminando
     }
@@ -273,6 +305,42 @@ export default function ProfesorPerfil() {
               </svg>
               Agregar Estudiante
             </button>
+          </div>
+
+          {/* Sección de promedios del curso */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Promedios del Curso</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Promedios por parcial */}
+              {[1, 2, 3].map((parcial) => (
+                <div key={parcial} className="text-center">
+                  <div className="text-sm text-gray-500 mb-1">Parcial {parcial}</div>
+                  <div className={`text-xl font-bold px-3 py-2 rounded-full ${
+                    promediosParciales[parcial] === "S/N"
+                      ? "bg-gray-100 text-gray-800"
+                      : parseFloat(promediosParciales[parcial]) >= 14
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}>
+                    {promediosParciales[parcial]}
+                  </div>
+                </div>
+              ))}
+              
+              {/* Promedio general */}
+              <div className="text-center">
+                <div className="text-sm text-gray-500 mb-1">Promedio General</div>
+                <div className={`text-xl font-bold px-3 py-2 rounded-full ${
+                  promedioGeneral === "S/N"
+                    ? "bg-gray-100 text-gray-800"
+                    : parseFloat(promedioGeneral) >= 14
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}>
+                  {promedioGeneral}
+                </div>
+              </div>
+            </div>
           </div>
 
           {estudiantes.length === 0 ? (
@@ -368,32 +436,69 @@ export default function ProfesorPerfil() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {e.nota1 || "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            e.nota1 === "S/N" 
+                              ? "bg-gray-100 text-gray-800"
+                              : parseFloat(e.nota1) >= 14
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {e.nota1}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {e.nota2 || "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            e.nota2 === "S/N" 
+                              ? "bg-gray-100 text-gray-800"
+                              : parseFloat(e.nota2) >= 14
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {e.nota2}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {e.nota3 || "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            e.nota3 === "S/N" 
+                              ? "bg-gray-100 text-gray-800"
+                              : parseFloat(e.nota3) >= 14
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {e.nota3}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {e.promedio || "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            e.promedio === "S/N" 
+                              ? "bg-gray-100 text-gray-800"
+                              : parseFloat(e.promedio) >= 14
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {e.promedio}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => navigator("")}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            onClick={() => navigator(`/profesor/asignar-notas/${e.idUsuario}/${idCurso}`)}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
                           >
-                            Ingresar Notas 📝
+                            <svg 
+                              className="w-4 h-4 mr-2" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth="2" 
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Ver Detalles
                           </button>
                         </td>
                       </tr>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/AuthProvider";
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.png"; 
+import logo from "../assets/logo.png";
+import apiService from "../services/apiService"; 
 function Home() {
   const { userRole, logout, useCedula } = useAuth();
   const [, setMessage] = useState("");
@@ -10,21 +11,8 @@ function Home() {
   const anioActivo = async () => {
     setMessage("");
     try {
-      const aniofeach = await fetch(
-        "http://localhost:8080/api/anios-lectivos/activos",
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      const anioActual = await aniofeach.json();
-      
-      if (!aniofeach.ok) {
-        throw new Error(aniofeach.message || "No existe Años Activos");
-      }
-
-      setAnio(anioActual[0])
-
+      const anioActual = await apiService.getAniosLectivosActivos();
+      setAnio(anioActual[0]);
     } catch (err) {
       setMessage(err.message);
     }
@@ -96,7 +84,7 @@ function Home() {
         title: "Generar Reporte",
         description: "Generacion de Reporte de Notas de Estudiantes",
         icon: "📝",
-        path: "",
+        path: `/profesor/generar-reporte/${useCedula}`,
         color: "bg-yellow-100 text-yellow-800",
       },
       {

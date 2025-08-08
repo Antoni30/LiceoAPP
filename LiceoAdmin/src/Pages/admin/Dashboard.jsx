@@ -2,6 +2,7 @@ import Navbar from "../../components/Nabvar";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/AuthProvider";
 import { useNavigate } from "react-router-dom";
+import apiService from "../../services/apiService";
 
 function Dashboard() {
   const { isAuthenticated } = useAuth();
@@ -29,13 +30,7 @@ function Dashboard() {
   const fetchAniosLectivos = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/anios-lectivos", {
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Error al cargar datos");
-
-      const data = await response.json();
+      const data = await apiService.getAniosLectivos();
       setAniosLectivos(data);
     } catch (err) {
       setError(err.message);
@@ -53,20 +48,7 @@ function Dashboard() {
         estado: estado === "Activo" ? "Inactivo" : "Activo",
       };
 
-      const response = await fetch(
-        `http://localhost:8080/api/anios-lectivos/estado/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(updatedAnio),
-        }
-      );
-
-      if (!response.ok)
-        throw new Error("Error al actualizar el estado del año lectivo");
+      await apiService.updateAnioLectivoEstado(id, updatedAnio.estado === "Activo");
 
       fetchAniosLectivos();
     } catch (err) {
@@ -104,19 +86,7 @@ function Dashboard() {
         estado: aniosLectivos.find(a => a.id === editAnio.id)?.estado || "Activo",
       };
 
-      const response = await fetch(
-        `http://localhost:8080/api/anios-lectivos/${editAnio.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(updatedAnio),
-        }
-      );
-
-      if (!response.ok) throw new Error("Las fechas se cruzan con otro año lectivo existente");
+      await apiService.updateAnioLectivo(editAnio.id, updatedAnio);
 
       fetchAniosLectivos();
       setEditAnio({ id: null, fechaInicio: "", fechaFinal: "", error: "" });

@@ -101,6 +101,10 @@ class ApiService {
     return this.request("/materias");
   }
 
+  async getMateriaID(idMateria) {
+    return this.request(`/materias/${idMateria}`);
+  }
+
   async createMateria(materiaData) {
     return this.request("/materias", {
       method: "POST",
@@ -119,6 +123,166 @@ class ApiService {
     return this.request(`/materias/${id}`, {
       method: "DELETE",
     });
+  }
+
+  // Cursos endpoints
+  async getCursosPorAnio(idAnio) {
+    return this.request(`/cursos/por-anio/${idAnio}`);
+  }
+
+  async createCurso(cursoData) {
+    return this.request("/cursos", {
+      method: "POST",
+      body: JSON.stringify(cursoData),
+    });
+  }
+
+  async updateCurso(id, cursoData) {
+    return this.request(`/cursos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(cursoData),
+    });
+  }
+
+  async deleteCurso(id) {
+    return this.request(`/cursos/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getCurso(id) {
+    return this.request(`/cursos/${id}`);
+  }
+
+  // Años lectivos endpoints
+  async getAniosLectivos() {
+    return this.request("/anios-lectivos");
+  }
+
+  async getAniosLectivosActivos() {
+    return this.request("/anios-lectivos/activos");
+  }
+
+  async createAnioLectivo(anioData) {
+    return this.request("/anios-lectivos", {
+      method: "POST",
+      body: JSON.stringify(anioData),
+    });
+  }
+
+  async updateAnioLectivoEstado(id, activo) {
+    return this.request(`/anios-lectivos/estado/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ activo }),
+    });
+  }
+
+  async updateAnioLectivo(id, anioData) {
+    return this.request(`/anios-lectivos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(anioData),
+    });
+  }
+
+  // Roles endpoints
+  async getRoles() {
+    return this.request("/roles");
+  }
+
+  async deleteUserRole(userId, roleId) {
+    return this.request(`/usuarios-roles/usuario/${userId}/rol/${roleId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async assignUserRole(idUsuario, idRol) {
+   
+    return this.request("/usuarios-roles", {
+      method: "POST",
+      body: JSON.stringify({
+      idUsuario,
+      idRol
+    })
+    });
+  }
+
+  // Logout endpoint
+  async logout() {
+    return this.request("/auth/logout", {
+      method: "POST",
+    });
+  }
+
+  // Cursos-Materias endpoints
+  async getCursoMaterias(idCurso) {
+    return this.request(`/cursos-materias/curso/${idCurso}`);
+  }
+
+  async createCursoMateria(idCurso,idMateria) {
+    return this.request("/cursos-materias", {
+      method: "POST",
+      body: JSON.stringify({ idCurso, idMateria }),
+    });
+  }
+
+  async deleteCursoMateria(idCurso, idMateria) {
+    return this.request(`/cursos-materias/curso/${idCurso}/materia/${idMateria}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Usuarios-Cursos endpoints
+  async getUserCursos(userId) {
+    return this.request(`/usuarios-cursos/usuario/${userId}`);
+  }
+
+  async getCursoUsuarios(cursoId) {
+    return this.request(`/usuarios-cursos/curso/${cursoId}`);
+  }
+
+  async createUsuarioCurso(idUsuario, idCurso) {
+    return this.request("/usuarios-cursos", {
+      method: "POST",
+      body: JSON.stringify({
+        idUsuario,
+        idCurso
+      }),
+    });
+  }
+
+  async deleteUsuarioCurso(userId, cursoId) {
+    return this.request(`/usuarios-cursos/usuario/${userId}/curso/${cursoId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Notas endpoints
+  async getNotasByUsuarioMateria(idUsuario, idMateria) {
+    return this.request(`/notas/usuario/${idUsuario}/materia/${idMateria}`);
+  }
+
+  async createNota(idUsuario, idMateria, nota, parcial) {
+    return this.request("/notas", {
+      method: "POST",
+      body: JSON.stringify({ idUsuario, idMateria, nota, parcial }),
+    });
+  }
+
+
+  async updateNota(idNota, idUsuario, idMateria, nota, parcial) {
+    return this.request(`/notas/${idNota}`, {
+      method: "PUT",
+      body: JSON.stringify({ idUsuario, idMateria, nota, parcial }),
+    });
+  }
+
+  async notasParcial(idUsuario,parcial) {
+    return this.request(`/notas/usuario/${idUsuario}/parcial/${parcial}`);
+  }
+
+  // Profesor-Materias endpoints (si existe este endpoint)
+  async getProfesorMaterias(idProfesor) {
+    return this.request(`/profesores/${idProfesor}/materias`);
   }
 }
 

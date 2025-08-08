@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/AuthProvider";
 import logo from "../assets/logo.png";
+import apiService from "../services/apiService";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -10,10 +11,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
-    fetch("http://localhost:8080/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    })
+    apiService.logout()
       .catch((error) => {
         console.error("Error en logout:", error);
       })

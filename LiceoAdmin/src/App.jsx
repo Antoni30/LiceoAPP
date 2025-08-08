@@ -14,6 +14,8 @@ import CursosPorAnio from "./Pages/admin/Cursos";
 import MateriasDelCurso from "./Pages/admin/MateriaCurso";
 import Participantes from "./Pages/admin/Participantes";
 import ProfesorPerfil from "./Pages/profesor/ProfesorPerfil";
+import AsignarNotas from "./Pages/profesor/AsignarNotas";
+import GenerarReporte from "./Pages/profesor/GenerarReporte";
 import NoAutorizado from "./Pages/NoAutorizado";
 import Home from "./Pages/Home";
 import NotFound from "./Pages/NoFound";
@@ -52,7 +54,8 @@ function App() {
           {/* Rutas solo para profesores */}
           <Route element={<ProtectedRoute allowedRoles={['profesor']} />}>
             <Route path="/profesor/:idProfesor" element={<ProfesorPerfil />} />
-            {/* Agrega aquí otras rutas específicas para profesores */}
+            <Route path="/profesor/asignar-notas/:idUsuario/:idCurso" element={<AsignarNotas />} />
+            <Route path="/profesor/generar-reporte/:idProfesor" element={<GenerarReporte />} />
           </Route>
 
           {/* Manejo de rutas no encontradas */}

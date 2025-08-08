@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Nabvar";
+import apiService from "../../services/apiService";
 
 function MateriasDelCurso() {
   const { idCurso } = useParams();
@@ -23,16 +24,7 @@ function MateriasDelCurso() {
   const fetchMateriasCurso = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/cursos-materias/curso/${idCurso}`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("Error al cargar las materias del curso");
-
-      const data = await response.json();
+      const data = await apiService.getCursoMaterias(idCurso);
       setMateriasExistentes(data);
     } catch (err) {
       setError(err.message);
@@ -44,13 +36,7 @@ function MateriasDelCurso() {
   const fetchMateriasDisponibles = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/materias", {
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Error al cargar las materias disponibles");
-
-      const data = await response.json();
+      const data = await apiService.getMaterias();
       setAllMaterias(data);
     } catch (err) {
       setError(err.message);
@@ -67,20 +53,7 @@ function MateriasDelCurso() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/cursos-materias", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          idCurso,
-          idMateria: materiaSeleccionada,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Error al agregar la materia");
-
+      await apiService.createCursoMateria(idCurso, materiaSeleccionada);
       fetchMateriasCurso();
       setMateriaSeleccionada("");
       setShowCreateModal(false);
@@ -104,16 +77,7 @@ function MateriasDelCurso() {
   const handleDeleteMateria = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/cursos-materias/curso/${idCurso}/materia/${materiaToDelete}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("Error al eliminar la materia");
-
+      await apiService.deleteCursoMateria(idCurso, materiaToDelete);
       fetchMateriasCurso();
       closeDeleteModal();
     } catch (err) {

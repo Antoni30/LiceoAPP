@@ -1,6 +1,7 @@
 import Navbar from "../../components/Nabvar";
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import apiService from "../../services/apiService";
 
 function AgregarAnio() {
   const [fechaInicio, setFechaInicio] = useState('');
@@ -41,20 +42,7 @@ function AgregarAnio() {
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/anios-lectivos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(nuevoAnio),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al agregar el nuevo año lectivo');
-      }
-
+      await apiService.createAnioLectivo(nuevoAnio);
       navigate(-1);
     } catch (err) {
       setError(err.message);

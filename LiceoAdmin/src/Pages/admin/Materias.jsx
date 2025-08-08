@@ -40,33 +40,15 @@ function Materias() {
 
   const handleSaveEdit = async () => {
     setMessage("");
-    setIsLoading(true);
     try {
-      const updatedMateria = { nombreMateria: nombreMateriaEdit };
-
-      const response = await fetch(
-        `http://localhost:8080/api/materias/${editMateria.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(updatedMateria),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al guardar los cambios");
-      }
-
-      fetchMaterias();
-      setEditMateria(null);
+      await executeRequest(async () => {
+        const updatedMateria = { nombreMateria: nombreMateriaEdit };
+        await apiService.updateMateria(editMateria.id, updatedMateria);
+        await fetchMaterias();
+        setEditMateria(null);
+      });
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      console.error('Error updating materia:', err);
     }
   };
 
@@ -85,56 +67,35 @@ function Materias() {
     setMessage("");
     if (!materiaToDelete) return;
 
-    setIsLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/materias/${materiaToDelete.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Materia asignada a uno o varios cursos");
-      }
-
-      fetchMaterias();
-      setShowDeleteModal(false);
-      setMateriaToDelete(null);
+      await executeRequest(async () => {
+        await apiService.deleteMateria(materiaToDelete.id);
+        await fetchMaterias();
+        setShowDeleteModal(false);
+        setMateriaToDelete(null);
+      });
     } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setIsLoading(false);
+      if (err.message) {
+        setMessage(err.message);
+      } else {
+        setMessage("Materia asignada a uno o varios cursos");
+      }
     }
   };
 
   const handleCreateMateria = async () => {
     setMessage("");
-    setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/materias", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ nombreMateria: newMateria }),
+      await executeRequest(async () => {
+        await apiService.createMateria({ nombreMateria: newMateria });
+        await fetchMaterias();
+        setShowCreateModal(false);
+        setNewMateria("");
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear la materia");
-      }
-
-      fetchMaterias();
-      setShowCreateModal(false);
-      setNewMateria("");
     } catch (err) {
-      setMessage(err.message);
-      setMessage("");
-    } finally {
-      setIsLoading(false);
+      if (err.message) {
+        setMessage(err.message);
+      }
     }
   };
 

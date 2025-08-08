@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import apiService from '../../services/apiService';
 
 export default function AsignarRolUsuario() {
   const { idUsuario } = useParams();
@@ -17,36 +18,26 @@ export default function AsignarRolUsuario() {
     const fetchData = async () => {
       try {
         // Obtener roles disponibles
-        const rolesResponse = await fetch('http://localhost:8080/api/roles', {
-          credentials: 'include'
-        });
-
-        if (!rolesResponse.ok) throw new Error('Error al obtener los roles');
-        
-        const rolesData = await rolesResponse.json();
+        const rolesData = await apiService.getRoles();
         setRoles(rolesData);
 
         // Obtener información básica del usuario (opcional)
-        const usuarioResponse = await fetch(`http://localhost:8080/api/usuarios/${idUsuario}`, {
-          credentials: 'include'
-        });
-
-        if (usuarioResponse.ok) {
-          const usuarioData = await usuarioResponse.json();
+        try {
+          const usuarioData = await apiService.getUser(idUsuario);
           setUsuarioInfo({
             nombres: usuarioData.nombres,
             apellidos: usuarioData.apellidos
           });
+        } catch (userErr) {
+          // Usuario no encontrado, continuar sin error
         }
 
         // Obtener roles actuales asignados al usuario
-        const rolesAsignadosResponse = await fetch(`http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`, {
-          credentials: 'include'
-        });
-
-        if (rolesAsignadosResponse.ok) {
-          const rolesData = await rolesAsignadosResponse.json();
+        try {
+          const rolesData = await apiService.getUserRoles(idUsuario);
           setRolesAsignados(rolesData);
+        } catch (rolesErr) {
+          // Sin roles asignados, continuar
         }
 
         setLoading(false);
@@ -80,31 +71,11 @@ export default function AsignarRolUsuario() {
       // Eliminar el primer rol actual
       if (rolesAsignados.length > 0) {
         const rolAEliminar = rolesAsignados[0].idRol;
-        const eliminarRolResponse = await fetch(`http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}/rol/${rolAEliminar}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-
-        if (!eliminarRolResponse.ok) {
-          throw new Error('Error al eliminar el rol anterior');
-        }
+        await apiService.deleteUserRole(idUsuario, rolAEliminar);
       }
 
       // Asignar el nuevo rol
-      const asignarRolResponse = await fetch('http://localhost:8080/api/usuarios-roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          idUsuario: idUsuario,
-          idRol: parseInt(rolSeleccionado)
-        })
-      });
-
-      if (!asignarRolResponse.ok) {
-        const errData = await asignarRolResponse.json();
-        throw new Error(errData.message || 'Error al asignar el rol');
-      }
+      await apiService.assignUserRole(idUsuario, parseInt(rolSeleccionado));
 
       setSuccess('Rol asignado correctamente');
       setTimeout(() => navigate('/usuarios'), 1500);

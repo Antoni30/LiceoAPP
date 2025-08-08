@@ -46,8 +46,8 @@ function CursosPorAnio() {
 
       const data = await response.json();
       setCursos(data);
-    } catch (err) {
-      setError(err.message);
+    } catch {
+      setError("Error al cargar los cursos");
     } finally {
       setIsLoading(false);
     }
@@ -105,8 +105,9 @@ function CursosPorAnio() {
       fetchCursos();
       setShowDeleteModal(false);
       setCursoToDelete(null);
-    } catch (err) {
-      setMessage(err.message);
+    } catch{
+      setMessage("Curso con estudiantes y materias");
+      
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import apiService from "../../services/apiService";
 
 export default function UsuarioCrear() {
   const [form, setForm] = useState({
@@ -30,35 +31,25 @@ export default function UsuarioCrear() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-
+      await apiService.createUser(form);
+      navigate("/usuarios");
+    } catch (err) {
+      if (err.response && err.response.data) {
+        const errData = err.response.data;
         if (typeof errData === "object" && !Array.isArray(errData)) {
           if (errData.message) {
             // Error general tipo "ya existe"
             setExistente(errData.message);
           } else {
-           const messages = Object.values(errData).join("\n");
-
+            const messages = Object.values(errData).join("\n");
             setMessage(messages);
           }
         } else {
           setExistente("Error desconocido al crear usuario");
         }
-
-        return; // no continues con navigate
+      } else {
+        setExistente(err.message || "Error al crear usuario");
       }
-
-      navigate("/usuarios");
-    } catch (err) {
-      setExistente(err.message);
     } finally {
       setIsSubmitting(false);
     }

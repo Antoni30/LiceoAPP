@@ -1,6 +1,7 @@
 import Navbar from "../../components/Nabvar";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import apiService from "../../services/apiService";
 
 export default function Participantes() {
   const { idCurso } = useParams();
@@ -27,15 +28,7 @@ export default function Participantes() {
   // Función para cargar usuarios disponibles
   const fetchUsuariosDisponibles = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo obtener la lista de usuarios");
-      }
-
-      const usuarios = await response.json();
+      const usuarios = await apiService.getUsers();
 
       // Filtrar solo usuarios que son profesores
       const profesores = [];
@@ -65,15 +58,7 @@ export default function Participantes() {
 
   const fetchEstudianteDisponibles = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo obtener la lista de usuarios");
-      }
-
-      const usuarios = await response.json();
+      const usuarios = await apiService.getUsers();
 
       // Filtrar solo usuarios que son estudiantes
       const estudiantes = [];
@@ -104,14 +89,7 @@ export default function Participantes() {
   // Verifica si un usuario tiene el rol de profesor (idRol = 2)
   const esProfesor = async (idUsuario) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
-        { credentials: "include" }
-      );
-
-      if (!response.ok) return false;
-
-      const roles = await response.json();
+      const roles = await apiService.getUserRoles(idUsuario);
       return roles.some((r) => r.idRol === 2);
     } catch (err) {
       console.error(`Error verificando roles del usuario ${idUsuario}:`, err);
@@ -122,14 +100,7 @@ export default function Participantes() {
   // Verifica si un usuario tiene el rol de estudiante (idRol = 3)
   const esEstudiante = async (idUsuario) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/usuarios-roles/usuario/${idUsuario}`,
-        { credentials: "include" }
-      );
-
-      if (!response.ok) return false;
-
-      const roles = await response.json();
+      const roles = await apiService.getUserRoles(idUsuario);
       return roles.some((r) => r.idRol === 3);
     } catch (err) {
       console.error(`Error verificando roles del usuario ${idUsuario}:`, err);
@@ -140,16 +111,7 @@ export default function Participantes() {
   // Verifica si el usuario no está asignado a ningún curso
   const verificarDisponibilidad = async (idUsuario) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/usuarios-cursos/usuario/${idUsuario}`,
-        { credentials: "include" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al verificar disponibilidad del usuario");
-      }
-
-      const cursosAsignados = await response.json();
+      const cursosAsignados = await apiService.getUserCursos(idUsuario);
       return cursosAsignados.length === 0; // true si no tiene cursos
     } catch (err) {
       console.error(
@@ -175,27 +137,7 @@ export default function Participantes() {
       }
 
       // 2. Asignar al curso
-      const response = await fetch(
-        "http://localhost:8080/api/usuarios-cursos",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            idUsuario: selectedUsuario,
-            idCurso: idCurso,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Error al asignar profesor al curso"
-        );
-      }
+      await apiService.createUsuarioCurso(selectedUsuario, idCurso);
 
       // Recargar la lista de participantes
       await fetchParticipantes();
@@ -223,27 +165,7 @@ export default function Participantes() {
       }
 
       // 2. Asignar al curso
-      const response = await fetch(
-        "http://localhost:8080/api/usuarios-cursos",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            idUsuario: selectedStudent,
-            idCurso: idCurso,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Error al asignar estudiante al curso"
-        );
-      }
+      await apiService.createUsuarioCurso(selectedStudent, idCurso);
 
       // Recargar la lista de participantes
       await fetchParticipantes();
@@ -262,60 +184,25 @@ export default function Participantes() {
       setError(null);
 
       // Paso 1: Obtener los IDs de usuarios del curso
-      const response = await fetch(
-        `http://localhost:8080/api/usuarios-cursos/curso/${idCurso}`,
-        {
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("No se pudo obtener la lista de participantes");
-      }
-      const usuariosCursos = await response.json();
+      const usuariosCursos = await apiService.getCursoUsuarios(idCurso);
 
       // Paso 2: Para cada usuario, obtener sus datos y rol
       const participantesData = await Promise.all(
         usuariosCursos.map(async (usuarioCurso) => {
           // Obtener información del usuario
-          const userResponse = await fetch(
-            `http://localhost:8080/api/usuarios/${usuarioCurso.idUsuario}`,
-            {
-              credentials: "include",
-            }
-          );
-          if (!userResponse.ok) {
-            throw new Error(
-              `No se pudo obtener información del usuario ${usuarioCurso.idUsuario}`
-            );
-          }
-          const userData = await userResponse.json();
+          const userData = await apiService.getUser(usuarioCurso.idUsuario);
 
           // Obtener rol del usuario
-          const rolResponse = await fetch(
-            `http://localhost:8080/api/usuarios-roles/usuario/${usuarioCurso.idUsuario}`,
-            {
-              credentials: "include",
-            }
-          );
-          if (!rolResponse.ok) {
-            throw new Error(
-              `No se pudo obtener el rol del usuario ${usuarioCurso.idUsuario}`
-            );
-          }
-          const rolData = await rolResponse.json();
+          const rolData = await apiService.getUserRoles(usuarioCurso.idUsuario);
 
           let nombreRol = "Sin rol asignado";
 
           if (rolData.length > 0) {
-            const nombreRolResponse = await fetch(
-              `http://localhost:8080/api/roles/${rolData[0].idRol}`,
-              {
-                credentials: "include",
-              }
-            );
-            if (nombreRolResponse.ok) {
-              const nombreRolData = await nombreRolResponse.json();
+            try {
+              const nombreRolData = await apiService.getRole(rolData[0].idRol);
               nombreRol = nombreRolData.nombre || `Rol ID: ${rolData[0].idRol}`;
+            } catch (roleErr) {
+              nombreRol = `Rol ID: ${rolData[0].idRol}`;
             }
           }
 
@@ -341,18 +228,7 @@ export default function Participantes() {
 
     setAddingParticipant(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/usuarios-cursos/usuario/${participantToDelete.idUsuario}/curso/${idCurso}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar participante del curso");
-      }
-
+      await apiService.deleteUsuarioCurso(participantToDelete.idUsuario, idCurso);
       // Recargar la lista de participantes
       await fetchParticipantes();
       closeDeleteModal();
