@@ -49,32 +49,24 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (repository.findByNickname(dto.getNickname()).isPresent()) {
             throw new RuntimeException("El nickname ya está en uso");
         }
-
         if (!ValidacionCedulaEcuatoriana.validar(dto.getIdUsuario())) {
             throw new IllegalArgumentException("La cédula ingresada no es válida para Ecuador");
         }
-
         if (repository.findByIdUsuario(dto.getIdUsuario()).isPresent()) {
             throw new RuntimeException("La cédula ya está en uso");
         }
-
         // Validación extra de email (opcional, si quieres mantenerla)
         if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
             throw new EmailInvalidoException("El formato del email es inválido. Debe ser ejemplo@dominio.com");
         }
-
         // Preparar y guardar usuario
         String contrasenaHasheada = passwordEncoder.encode(dto.getContrasena());
         dto.setContrasena(contrasenaHasheada);
-
         Usuario usuario = UsuarioMapper.toEntity(dto);
         usuario.setEmailVerificado(false);
         usuario.setTokenVerificacion(UUID.randomUUID().toString());
-
         usuario = repository.save(usuario);
-
         enviarEmailVerificacion(usuario);
-
         return UsuarioMapper.toDTO(usuario);
     }
 
@@ -139,25 +131,19 @@ public class UsuarioServiceImpl implements UsuarioService {
     public Optional<UsuarioDTO> actualizarUsuario(String id, UsuarioDTO dto) {
         return repository.findById(id)
                 .map(usuario -> {
-
-
                     if (!ValidacionCedulaEcuatoriana.validar(usuario.getIdUsuario())) {
                         throw new IllegalArgumentException("La cédula ingresada no es válida para Ecuador");
                     }
-
                     // Validación extra de email (opcional, si quieres mantenerla)
                     if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
                         throw new EmailInvalidoException("El formato del email es inválido. Debe ser ejemplo@dominio.com");
                     }
-
                     if (!dto.getNombres().matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")) {
                         throw new IllegalArgumentException("El nombre solo debe contener letras y espacios.");
                     }
-
                     if (!dto.getApellidos().matches("^[A-Za-zÁÉÍÓÚÑáéíóúñ ]+$")) {
                         throw new IllegalArgumentException("El apellido solo debe contener letras y espacios.");
                     }
-
                     if (!dto.getNickname().matches("^[a-zA-Z0-9_-]+$")) {
                         throw new IllegalArgumentException("El nickname solo puede contener letras, números, guiones y guiones bajos, sin espacios.");
                     }
@@ -171,7 +157,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                     // Actualizar campos básicos
                     usuario.setNombres(dto.getNombres());
                     usuario.setApellidos(dto.getApellidos());
-
                     // Verificar si el nickname cambió y es único
                     if(!usuario.getNickname().equals(dto.getNickname())) {
                         if(repository.findByNickname(dto.getNickname()).isPresent()) {
@@ -179,13 +164,11 @@ public class UsuarioServiceImpl implements UsuarioService {
                         }
                         usuario.setNickname(dto.getNickname());
                     }
-
                     // Hashear la nueva contraseña si se está actualizando
                     if(dto.getContrasena() != null && !dto.getContrasena().isEmpty()) {
                         String contrasenaHasheada = passwordEncoder.encode(dto.getContrasena());
                         usuario.setContrasena(contrasenaHasheada);
                     }
-
                     usuario.setEstado(dto.getEstado());
                     usuario.setMfaHabilitado(dto.isMfaHabilitado());
                     usuario = repository.save(usuario);

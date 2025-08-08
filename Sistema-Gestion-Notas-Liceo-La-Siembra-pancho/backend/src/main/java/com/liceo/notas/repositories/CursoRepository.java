@@ -33,4 +33,6 @@ public interface CursoRepository extends JpaRepository<Curso, Integer> {
 
     boolean existsByNombreCursoIgnoreCaseAndAnioLectivo_Id(String nombreCurso, Integer idAnioLectivo);
 
+    boolean existsByNombreCursoIgnoreCaseAndAnioLectivo_IdAndIdNot(String nombreCurso, Integer idAnioLectivo, Integer id);
+
 }

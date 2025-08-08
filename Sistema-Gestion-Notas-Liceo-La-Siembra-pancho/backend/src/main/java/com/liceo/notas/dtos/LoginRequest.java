@@ -20,4 +20,7 @@ public class LoginRequest {
      * Este campo es obligatorio y se utiliza para autenticar al usuario.
      */
     private String contrasena;
+
+    public LoginRequest(String admin, String number) {
+    }
 }

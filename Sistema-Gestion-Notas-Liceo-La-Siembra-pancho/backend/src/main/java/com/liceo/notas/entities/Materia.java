@@ -40,11 +40,4 @@ public class Materia {
     @OneToMany(mappedBy = "materia")
     private List<CursoMateria> cursosAsociados;
 
-    /**
-     * Lista de parciales asociados a esta materia.
-     * Relación One-to-Many con la entidad Parcial.
-     * - mappedBy: indica que la relación está gestionada desde la entidad Parcial.
-     */
-    @OneToMany(mappedBy = "materia")
-    private List<Parcial> parciales;
 }

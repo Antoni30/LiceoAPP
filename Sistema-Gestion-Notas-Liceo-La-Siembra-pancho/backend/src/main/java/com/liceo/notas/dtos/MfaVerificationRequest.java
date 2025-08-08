@@ -20,4 +20,7 @@ public class MfaVerificationRequest {
      * Este código suele ser generado por una aplicación autenticadora como Google Authenticator.
      */
     private String code;
+
+    public MfaVerificationRequest(String admin, String number) {
+    }
 }

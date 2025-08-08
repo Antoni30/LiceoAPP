@@ -99,9 +99,10 @@ public class CursoServiceImpl implements CursoService {
         return repository.findById(id)
                 .map(entidad -> {
 
-                    boolean cursoExistente = repository.existsByNombreCursoIgnoreCaseAndAnioLectivo_Id(
-                            entidad.getNombreCurso().toUpperCase().trim(),
-                            entidad.getAnioLectivo().getId()
+                    boolean cursoExistente = repository.existsByNombreCursoIgnoreCaseAndAnioLectivo_IdAndIdNot(
+                            dto.getNombreCurso().toUpperCase().trim(),
+                            dto.getIdAnioLectivo(),
+                            id
                     );
 
                     if (cursoExistente) {

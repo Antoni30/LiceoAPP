@@ -30,7 +30,7 @@ import java.util.*;
 @Service
 public class AuthService {
     @Value("${app.base-url}")
-    private String baseUrl;
+    public String baseUrl;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final MFAService mfaService;
@@ -40,21 +40,22 @@ public class AuthService {
      * Configurable mediante la propiedad app.mfa.code.expiration.minutes en application.properties.
      */
     @Value("${app.mfa.code.expiration.minutes:5}")
-    private int mfaCodeExpirationMinutes;
+    public int mfaCodeExpirationMinutes;
 
     /**
      * Clave secreta utilizada para firmar los tokens JWT.
      * Debe ser segura y estar configurada en las propiedades de la aplicación.
      */
     @Value("${jwt.secret}")
-    private String jwtSecret;
+    public String jwtSecret;
 
     /**
      * Tiempo de expiración de los tokens JWT en milisegundos.
      * Por defecto se establece en 86400000 ms = 24 horas.
      */
     @Value("${jwt.expirationMs:86400000}") // 24 horas por defecto
-    private int jwtExpirationMs;
+    public
+    int jwtExpirationMs;
 
     @Autowired
     private UsuarioServiceImpl usuarioService;
@@ -121,13 +122,9 @@ public class AuthService {
         if (!usuarioEmail.isEmailVerificado()) {
             throw new RuntimeException("verifique su correo para poder iniciar sesión");
         }
-
-
         // Buscar usuario en la base de datos
         Usuario usuario = usuarioRepository.findByIdUsuario(request.getIdUsuario().trim())
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
-
-
         // Verificar estado del usuario
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
             throw new RuntimeException("El usuario no está activo");
@@ -139,7 +136,6 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getContrasena().trim(), usuario.getContrasena())) {
             throw new RuntimeException("Credenciales inválidas");
         }
-
         // Procesar MFA si está habilitado
         if (usuario.getMfaHabilitado() != null && usuario.getMfaHabilitado()) {
             return processMfaLogin(usuario);
@@ -165,21 +161,17 @@ public class AuthService {
             if (request.getCode() == null || request.getCode().trim().isEmpty()) {
                 return new MfaVerificationResponse(false, "El código MFA es requerido", null);
             }
-
             // 2. Buscar usuario
             Usuario usuario = usuarioRepository.findByIdUsuario(request.getIdUsuario().trim())
                     .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
-
             // 3. Verificar si MFA está habilitado (antes de verificar el código)
             if (usuario.getMfaHabilitado() == null || !usuario.getMfaHabilitado()) {
                 return new MfaVerificationResponse(false, "MFA no está habilitado para este usuario", null);
             }
-
             // 4. Validar código MFA
             if (!mfaService.isCodeValid(usuario.getMfaSecret(), request.getCode().trim(), usuario.getMfaCodeExpiration())) {
                 return new MfaVerificationResponse(false, "Código de verificación inválido o expirado", null);
             }
-
             // En verifyMfaCode():
             String token = generateJwtToken(usuario); // Primero genera el token
             usuario.setMfaSecret(null);              // Luego limpia el código

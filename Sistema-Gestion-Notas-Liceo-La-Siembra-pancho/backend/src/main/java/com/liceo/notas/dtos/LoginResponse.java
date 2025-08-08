@@ -27,4 +27,8 @@ public class LoginResponse {
      * Este token se utiliza para realizar llamadas autenticadas a otros endpoints seguros.
      */
     private String token;
+
+    public boolean isExito() {
+        return  true;
+    }
 }
