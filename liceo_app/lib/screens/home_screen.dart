@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../constants/app_styles.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_cards.dart';
-import '../widgets/custom_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,13 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadAnioActivo() async {
     // TODO: Implementar la carga del año activo
-    // Por ahora usamos datos de ejemplo
+    // Datos de ejemplo por ahora
     setState(() {
-      anioActivo = {
-        'nombre': '2024-2025',
-        'fechaInicio': '2024-02-01',
-        'fechaFin': '2024-12-15',
-      };
+      anioActivo = {'nombre': '2024-2025', 'fechaInicio': '2024-02-01', 'fechaFin': '2024-12-15'};
     });
   }
 
@@ -59,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
         'description': 'Generación de Reporte de Notas de Estudiantes',
         'icon': Icons.assignment,
         'color': AppColors.success,
-        'path': '/profesor/reporte-notas',
+        'path': '/profesor/generar-reporte',
+        'requiresParam': true,
       },
       {
         'title': 'Generar Reporte Horario',
@@ -106,16 +102,16 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (authProvider.isEstudiante) {
       return [...commonActions, ...estudianteActions];
     }
-
-    // Retornar solo acciones comunes si no tiene rol específico
     return commonActions;
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Mostrar diálogo de confirmación para salir de la app
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+
         final shouldExit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -133,11 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         );
-        
+
         if (shouldExit == true) {
           SystemNavigator.pop();
         }
-        return false;
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -151,14 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppStyles.radiusMd),
                 ),
-                child: const Icon(
-                  Icons.school,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
+                child: const Icon(Icons.school, color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: AppStyles.spacing3),
               Text(
@@ -175,15 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, authProvider, child) {
                 return PopupMenuButton<String>(
                   icon: CircleAvatar(
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: AppColors.primary.withValues(
+                      alpha: 0.1,
+                    ), // reemplazo de withOpacity
                     child: Text(
                       authProvider.displayName.isNotEmpty
                           ? authProvider.displayName[0].toUpperCase()
                           : 'U',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
                   onSelected: (value) async {
@@ -236,27 +226,24 @@ class _HomeScreenState extends State<HomeScreen> {
             final actionCards = _getActionCards(authProvider);
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(AppStyles.spacing5),
+              padding: const EdgeInsets.all(AppStyles.spacing4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header de bienvenida
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(AppStyles.spacing6),
+                    padding: const EdgeInsets.all(AppStyles.spacing4),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.primary,
-                          AppColors.primary.withOpacity(0.8),
-                        ],
+                        colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
                       ),
                       borderRadius: BorderRadius.circular(AppStyles.radiusLg),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: AppStyles.elevationMd,
                           offset: const Offset(0, 4),
                         ),
@@ -266,18 +253,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '¡Bienvenido, ${authProvider.roleName}!',
+                          '¡Hola, ${authProvider.roleName}!',
                           style: AppStyles.headingLarge.copyWith(
                             color: Colors.white,
-                            fontSize: AppStyles.text2Xl,
+                            fontSize: AppStyles.textXl,
                           ),
                         ),
                         const SizedBox(height: AppStyles.spacing2),
                         Text(
                           authProvider.displayName,
                           style: AppStyles.bodyLarge.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: AppStyles.textLg,
+                            color: Colors.white.withValues(alpha: 0.9), // reemplazo de withOpacity
+                            fontSize: AppStyles.textBase,
                           ),
                         ),
                         if (anioActivo != null) ...[
@@ -288,7 +275,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               vertical: AppStyles.spacing2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(
+                                alpha: 0.2,
+                              ), // reemplazo de withOpacity
                               borderRadius: BorderRadius.circular(AppStyles.radiusMd),
                             ),
                             child: Text(
@@ -303,13 +292,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: AppStyles.spacing6),
+
                   // Estadísticas rápidas (solo para admin)
                   if (authProvider.isAdmin) ...[
-                    Text(
-                      'Resumen del Sistema',
-                      style: AppStyles.headingMedium,
-                    ),
+                    Text('Resumen del Sistema', style: AppStyles.headingMedium),
                     const SizedBox(height: AppStyles.spacing4),
                     Row(
                       children: [
@@ -356,42 +344,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: AppStyles.spacing6),
                   ],
+
                   // Acciones disponibles
-                  Text(
-                    'Acciones Disponibles',
-                    style: AppStyles.headingMedium,
-                  ),
+                  Text('Acciones Disponibles', style: AppStyles.headingMedium),
                   const SizedBox(height: AppStyles.spacing4),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.2,
-                      crossAxisSpacing: AppStyles.spacing3,
-                      mainAxisSpacing: AppStyles.spacing3,
-                    ),
-                    itemCount: actionCards.length,
-                    itemBuilder: (context, index) {
-                      final card = actionCards[index];
-                      return ActionCard(
-                        title: card['title'],
-                        description: card['description'],
-                        icon: card['icon'],
-                        color: card['color'],
-                        onTap: () {
-                          context.push(card['path']);
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final crossAxisCount = screenWidth < 600 ? 2 : 3;
+                      final aspectRatio = screenWidth < 600 ? 1.1 : 1.2;
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: aspectRatio,
+                          crossAxisSpacing: AppStyles.spacing3,
+                          mainAxisSpacing: AppStyles.spacing3,
+                        ),
+                        itemCount: actionCards.length,
+                        itemBuilder: (context, index) {
+                          final card = actionCards[index];
+                          return ActionCard(
+                            title: card['title'] as String,
+                            description: card['description'] as String,
+                            icon: card['icon'] as IconData,
+                            color: card['color'] as Color,
+                            onTap: () {
+                              final path = card['path'] as String;
+                              final requiresParam = card['requiresParam'] as bool? ?? false;
+
+                              if (requiresParam && path.contains('/profesor/generar-reporte')) {
+                                final userId = authProvider.userId ?? '1';
+                                context.push('/profesor/generar-reporte/$userId');
+                              } else {
+                                context.push(path);
+                              }
+                            },
+                          );
                         },
                       );
                     },
                   ),
+
                   const SizedBox(height: AppStyles.spacing6),
                 ],
               ),
             );
           },
         ),
-      ), // Cierre del Scaffold
+      ),
     );
   }
 }

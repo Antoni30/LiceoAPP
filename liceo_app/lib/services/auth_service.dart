@@ -78,6 +78,13 @@ class AuthService extends BaseService {
       await prefs.setString('auth_token', token);
       print('💾 [AuthService] Token guardado en SharedPreferences');
       
+      // DEBUG: Verificar datos del login response
+      print('🔍 [AuthService] Datos completos del login response:');
+      print('   - idUsuario en response: ${data['idUsuario']}');
+      print('   - nombre en response: ${data['nombre']}'); 
+      print('   - apellido en response: ${data['apellido']}');
+      print('   - email en response: ${data['email']}');
+      
       // 3. Obtener información del usuario (roles)
       final usuarioRolesUrl = '${ApiConfig.usuariosRolesEndpoint}/usuario/$idUsuario';
       print('🔗 [AuthService] URL de usuario-roles: $usuarioRolesUrl');

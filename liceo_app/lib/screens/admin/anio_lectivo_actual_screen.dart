@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../constants/app_styles.dart';
 import '../../services/curso_service.dart';
 import '../../services/anio_academico_service.dart';
@@ -139,7 +138,7 @@ class _AnioLectivoActualScreenState extends State<AnioLectivoActualScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withOpacity(0.1),
+                      color: AppColors.secondary.withValues(alpha: 0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
@@ -184,7 +183,7 @@ class _AnioLectivoActualScreenState extends State<AnioLectivoActualScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.secondary, AppColors.secondary.withOpacity(0.8)],
+          colors: [AppColors.secondary, AppColors.secondary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -264,7 +263,7 @@ class _AnioLectivoActualScreenState extends State<AnioLectivoActualScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

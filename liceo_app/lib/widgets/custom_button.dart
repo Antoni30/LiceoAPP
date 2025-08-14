@@ -29,14 +29,14 @@ class CustomButton extends StatelessWidget {
   const CustomButton.icon({
     super.key,
     required this.text,
-    required IconData iconData,
+    required this.iconData,
     this.onPressed,
     this.isLoading = false,
     this.type = ButtonType.primary,
     this.variant,
     this.size,
     this.customSize,
-  }) : icon = null, iconData = iconData;
+  }) : icon = null;
 
   @override
   Widget build(BuildContext context) {

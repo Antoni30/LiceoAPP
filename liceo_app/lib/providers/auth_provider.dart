@@ -58,7 +58,7 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       print('❌ [AuthProvider] Error en login: $e');
       _setError(e.toString());
-      throw e;
+      rethrow;
     } finally {
       _setLoading(false);
     }
@@ -116,6 +116,15 @@ class AuthProvider with ChangeNotifier {
 
   String get displayName {
     return _currentUser?.fullName ?? 'Usuario';
+  }
+
+  String? get userId {
+    print('🔍 [AuthProvider] Obteniendo userId...');
+    print('🔍 [AuthProvider] _currentUser disponible: ${_currentUser != null}');
+    if (_currentUser != null) {
+      print('🔍 [AuthProvider] _currentUser.idUsuario: ${_currentUser!.idUsuario}');
+    }
+    return _currentUser?.idUsuario;
   }
 
   String get roleName {

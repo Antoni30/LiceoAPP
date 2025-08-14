@@ -6,6 +6,11 @@ import '../screens/auth/login_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/profile_edit_screen.dart';
+import '../screens/profesor/asignar_notas_screen.dart';
+import '../screens/profesor/generar_reporte_screen.dart';
+import '../screens/profesor/estudiantes_screen.dart';
+import '../screens/profesor/detalle_estudiante_screen.dart';
+import '../screens/estudiante/estudiante_detalle_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter() {
@@ -21,8 +26,9 @@ class AppRouter {
           return '/';
         }
 
-        // Si está logueado y está en login, redirigir a home
+        // Si está logueado y está en login, redirigir según rol
         if (isLoggedIn && isLoginRoute) {
+          if (authProvider.isEstudiante) return '/estudiante';
           return '/home';
         }
 
@@ -30,18 +36,10 @@ class AppRouter {
       },
       routes: [
         // Ruta de login
-        GoRoute(
-          path: '/',
-          name: 'login',
-          builder: (context, state) => const LoginScreen(),
-        ),
+        GoRoute(path: '/', name: 'login', builder: (context, state) => const LoginScreen()),
 
         // Ruta de home
-        GoRoute(
-          path: '/home',
-          name: 'home',
-          builder: (context, state) => const HomeScreen(),
-        ),
+        GoRoute(path: '/home', name: 'home', builder: (context, state) => const HomeScreen()),
 
         // Ruta de perfil
         GoRoute(
@@ -64,22 +62,15 @@ class AppRouter {
         GoRoute(
           path: '/profesor/estudiantes',
           name: 'profesor-estudiantes',
-          builder: (context, state) => const ProfesorEstudiantesScreen(),
-        ),
-
-        GoRoute(
-          path: '/profesor/reporte-notas',
-          name: 'profesor-reporte-notas',
-          builder: (context, state) => const ProfesorReporteNotasScreen(),
-        ),
-
-        GoRoute(
-          path: '/profesor/reporte-horario',
-          name: 'profesor-reporte-horario',
-          builder: (context, state) => const ProfesorReporteHorarioScreen(),
+          builder: (context, state) => const EstudiantesScreen(),
         ),
 
         // Rutas de estudiantes
+        GoRoute(
+          path: '/estudiante',
+          name: 'estudiante-detalle',
+          builder: (context, state) => const EstudianteDetalleScreen(),
+        ),
         GoRoute(
           path: '/estudiante/cursos',
           name: 'estudiante-cursos',
@@ -102,6 +93,38 @@ class AppRouter {
           path: '/estudiante/tareas',
           name: 'estudiante-tareas',
           builder: (context, state) => const EstudianteTareasScreen(),
+        ),
+
+        // Ruta de asignar notas
+        GoRoute(
+          path: '/profesor/asignar-notas/:idUsuario/:idCurso',
+          name: 'asignar-notas',
+          builder: (context, state) {
+            final idUsuario = state.pathParameters['idUsuario']!;
+            final idCurso = state.pathParameters['idCurso']!;
+            return AsignarNotasScreen(idUsuario: idUsuario, idCurso: idCurso);
+          },
+        ),
+
+        // Ruta de generar reporte
+        GoRoute(
+          path: '/profesor/generar-reporte/:idProfesor',
+          name: 'generar-reporte',
+          builder: (context, state) {
+            final idProfesor = state.pathParameters['idProfesor']!;
+            return GenerarReporteScreen(idProfesor: idProfesor);
+          },
+        ),
+
+        // Ruta de detalle de estudiante
+        GoRoute(
+          path: '/profesor/detalle-estudiante/:idUsuario/:idCurso',
+          name: 'detalle-estudiante',
+          builder: (context, state) {
+            final idUsuario = state.pathParameters['idUsuario']!;
+            final idCurso = state.pathParameters['idCurso']!;
+            return DetalleEstudianteScreen(idUsuario: idUsuario, idCurso: idCurso);
+          },
         ),
 
         // Ruta de no autorizado
@@ -131,31 +154,24 @@ class AppRouter {
 class DashboardScreen extends StatelessWidget {
   final String title;
   final String content;
-  
-  const DashboardScreen({
-    super.key,
-    required this.title,
-    required this.content,
-  });
+
+  const DashboardScreen({super.key, required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        context.pop();
-        return false;
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.pop();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
+          leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         ),
-        body: Center(
-          child: Text(content),
-        ),
+        body: Center(child: Text(content)),
       ),
     );
   }
@@ -167,10 +183,7 @@ class ProfesorEstudiantesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(
-      title: 'Estudiantes',
-      content: 'Gestionar de Estudiantes',
-    );
+    return const DashboardScreen(title: 'Estudiantes', content: 'Gestionar de Estudiantes');
   }
 }
 
@@ -204,10 +217,7 @@ class EstudianteCursosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(
-      title: 'Mis Cursos',
-      content: 'Mis Cursos Matriculados',
-    );
+    return const DashboardScreen(title: 'Mis Cursos', content: 'Mis Cursos Matriculados');
   }
 }
 
@@ -216,10 +226,7 @@ class EstudianteNotasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(
-      title: 'Mis Notas',
-      content: 'Mis Calificaciones',
-    );
+    return const DashboardScreen(title: 'Mis Notas', content: 'Mis Calificaciones');
   }
 }
 
@@ -228,10 +235,7 @@ class EstudianteHorariosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(
-      title: 'Horarios',
-      content: 'Mi Horario de Clases',
-    );
+    return const DashboardScreen(title: 'Horarios', content: 'Mi Horario de Clases');
   }
 }
 
@@ -240,10 +244,7 @@ class EstudianteTareasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DashboardScreen(
-      title: 'Tareas',
-      content: 'Mis Tareas y Trabajos',
-    );
+    return const DashboardScreen(title: 'Tareas', content: 'Mis Tareas y Trabajos');
   }
 }
 
@@ -259,11 +260,7 @@ class NoAutorizedScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.block,
-                size: 64,
-                color: Colors.red,
-              ),
+              const Icon(Icons.block, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               const Text(
                 'No Autorizado',
@@ -296,11 +293,7 @@ class NotFoundScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.orange,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.orange),
               const SizedBox(height: 16),
               const Text(
                 'Página no encontrada',

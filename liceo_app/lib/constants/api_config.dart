@@ -20,11 +20,11 @@ class ApiConfig {
   static String get baseUrl {
     switch (environment) {
       case Environment.development:
-        return 'http://192.168.100.218:8080/api';
+        return 'http://192.168.1.90:8080/api';
       case Environment.production:
         return 'https://liceo-api.dominio.com/api';
       case Environment.local:
-        return 'http://192.168.100.218:8080/api';
+        return 'http://192.168.1.90:8080/api';
     }
   }
   
@@ -32,11 +32,11 @@ class ApiConfig {
   static String get serverUrl {
     switch (environment) {
       case Environment.development:
-        return 'http://192.168.100.218:8080';
+        return 'http://192.168.1.90:8080';
       case Environment.production:
         return 'https://liceo-api.dominio.com';
       case Environment.local:
-        return 'http://192.168.100.218:8080';
+        return 'http://192.168.1.90:8080';
     }
   }
   

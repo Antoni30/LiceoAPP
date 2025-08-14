@@ -117,6 +117,8 @@ class _VerificationModalState extends State<VerificationModal> {
               labelText: 'Código de verificación',
               hintText: 'Ingresa el código de 6 dígitos',
               keyboardType: TextInputType.number,
+              maxLength: 6,
+              autofocus: true,
               errorText: _errorMessage,
             ),
             

@@ -14,6 +14,8 @@ class CustomTextField extends StatefulWidget {
   final bool readOnly;
   final int maxLines;
   final String? errorText;
+  final int? maxLength;
+  final bool autofocus;
 
   const CustomTextField({
     super.key,
@@ -29,6 +31,8 @@ class CustomTextField extends StatefulWidget {
     this.readOnly = false,
     this.maxLines = 1,
     this.errorText,
+    this.maxLength,
+    this.autofocus = false,
   });
 
   @override
@@ -74,12 +78,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
           onChanged: widget.onChanged,
           readOnly: widget.readOnly,
           maxLines: widget.maxLines,
+          maxLength: widget.maxLength,
+          autofocus: widget.autofocus,
           focusNode: _focusNode,
           style: AppStyles.bodyLarge,
           decoration: AppStyles.inputDecoration(
             hintText: widget.hintText,
             prefixIcon: widget.prefixIcon,
-            suffixIcon: widget.obscureText 
+            suffixIcon: widget.obscureText
                 ? IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -92,9 +98,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     },
                   )
                 : widget.suffixIcon,
-          ).copyWith(
-            errorText: widget.errorText,
-          ),
+          ).copyWith(errorText: widget.errorText),
         ),
       ],
     );
@@ -141,16 +145,10 @@ class CustomDropdown<T> extends StatelessWidget {
           items: items,
           onChanged: onChanged,
           validator: validator,
-          decoration: AppStyles.inputDecoration(
-            hintText: hintText,
-            prefixIcon: prefixIcon,
-          ),
+          decoration: AppStyles.inputDecoration(hintText: hintText, prefixIcon: prefixIcon),
           style: AppStyles.bodyLarge,
           dropdownColor: AppColors.surface,
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            color: AppColors.textLight,
-          ),
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textLight),
         ),
       ],
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../constants/app_styles.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
@@ -86,27 +85,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
     });
   }
 
-  Color _getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'administrador':
-        return AppColors.purple;
-      case 'profesor':
-        return AppColors.primary;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
 
-  String _getRoleDisplayName(String role) {
-    switch (role.toLowerCase()) {
-      case 'administrador':
-        return 'Admin';
-      case 'profesor':
-        return 'Profesor';
-      default:
-        return role;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,14 +138,18 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
               children: [
                 // Barra de búsqueda
                 Container(
-                  padding: const EdgeInsets.all(AppStyles.spacing4),
+                  padding: const EdgeInsets.all(AppStyles.spacing3),
                   color: AppColors.surface,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          hintText: 'Buscar usuarios...',
-                          controller: _searchController,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: CustomTextField(
+                              hintText: 'Buscar usuarios...',
+                              controller: _searchController,
+                              autofocus: false,
+                          maxLength: 100,
                           prefixIcon: const Icon(
                             Icons.search,
                             color: AppColors.textLight,
@@ -187,34 +170,77 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                           ),
                         ),
                       ),
-                    ],
+                        ],
+                      );
+                    }
                   ),
                 ),
 
                 // Estadísticas
                 Container(
-                  padding: const EdgeInsets.all(AppStyles.spacing4),
+                  padding: const EdgeInsets.all(AppStyles.spacing3),
                   color: AppColors.surface,
-                  child: Row(
-                    children: [
-                      _StatCard(
-                        title: 'Total',
-                        value: _users.length.toString(),
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: AppStyles.spacing3),
-                      _StatCard(
-                        title: 'Admins',
-                        value: _users.where((u) => u.isAdmin).length.toString(),
-                        color: AppColors.purple,
-                      ),
-                      const SizedBox(width: AppStyles.spacing3),
-                      _StatCard(
-                        title: 'Profesores',
-                        value: _users.where((u) => u.isProfesor).length.toString(),
-                        color: AppColors.success,
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 500) {
+                        return Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    title: 'Total',
+                                    value: _users.length.toString(),
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: AppStyles.spacing2),
+                                Expanded(
+                                  child: _StatCard(
+                                    title: 'Admins',
+                                    value: _users.where((u) => u.isAdmin).length.toString(),
+                                    color: AppColors.purple,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppStyles.spacing2),
+                            _StatCard(
+                              title: 'Profesores',
+                              value: _users.where((u) => u.isProfesor).length.toString(),
+                              color: AppColors.success,
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Total',
+                              value: _users.length.toString(),
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: AppStyles.spacing3),
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Admins',
+                              value: _users.where((u) => u.isAdmin).length.toString(),
+                              color: AppColors.purple,
+                            ),
+                          ),
+                          const SizedBox(width: AppStyles.spacing3),
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Profesores',
+                              value: _users.where((u) => u.isProfesor).length.toString(),
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
                   ),
                 ),
 
@@ -249,7 +275,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                               ),
                             )
                           : ListView.builder(
-                              padding: const EdgeInsets.all(AppStyles.spacing4),
+                              padding: const EdgeInsets.all(AppStyles.spacing3),
                               itemCount: _filteredUsers.length,
                               itemBuilder: (context, index) {
                                 final user = _filteredUsers[index];
@@ -354,7 +380,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppStyles.spacing3),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppStyles.radiusMd),
         ),
         child: Column(
@@ -392,6 +418,28 @@ class _UserCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  Color _getRoleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'administrador':
+        return AppColors.purple;
+      case 'profesor':
+        return AppColors.primary;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  String _getRoleDisplayName(String role) {
+    switch (role.toLowerCase()) {
+      case 'administrador':
+        return 'Admin';
+      case 'profesor':
+        return 'Profesor';
+      default:
+        return role;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -406,7 +454,7 @@ class _UserCard extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 child: Text(
                   user.nombre.isNotEmpty ? user.nombre[0].toUpperCase() : 'U',
                   style: const TextStyle(
@@ -463,7 +511,7 @@ class _UserCard extends StatelessWidget {
                           vertical: AppStyles.spacing1,
                         ),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(AppStyles.radiusSm),
                         ),
                         child: Text(
@@ -511,27 +559,7 @@ class _UserCard extends StatelessWidget {
     );
   }
 
-  Color _getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'administrador':
-        return AppColors.purple;
-      case 'profesor':
-        return AppColors.primary;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
 
-  String _getRoleDisplayName(String role) {
-    switch (role.toLowerCase()) {
-      case 'administrador':
-        return 'Admin';
-      case 'profesor':
-        return 'Profesor';
-      default:
-        return role;
-    }
-  }
 }
 
 class _UserDetailsSheet extends StatelessWidget {
@@ -552,7 +580,7 @@ class _UserDetailsSheet extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 32,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 child: Text(
                   user.nombre.isNotEmpty ? user.nombre[0].toUpperCase() : 'U',
                   style: const TextStyle(
@@ -615,7 +643,7 @@ class _UserDetailsSheet extends StatelessWidget {
                   vertical: AppStyles.spacing2,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppStyles.radiusMd),
                 ),
                 child: Text(

@@ -35,8 +35,8 @@ class ActionCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
+                color.withValues(alpha: 0.1),
+                color.withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -47,12 +47,12 @@ class ActionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppStyles.spacing2),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppStyles.radiusMd),
                 ),
                 child: Icon(
                   icon,
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                   size: 24,
                 ),
               ),
@@ -117,8 +117,8 @@ class InfoCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.05),
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -127,7 +127,7 @@ class InfoCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppStyles.spacing3),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(AppStyles.radiusMd),
               ),
               child: Icon(

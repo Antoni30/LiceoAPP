@@ -47,6 +47,16 @@ class NotaService extends BaseService {
     }
   }
 
+  /// Obtiene las notas de un usuario específico en una materia
+  Future<List<Map<String, dynamic>>> getNotasByUsuarioMateria(int userId, int materiaId) async {
+    try {
+      final response = await get('${ApiConfig.notasEndpoint}/usuario/$userId/materia/$materiaId');
+      return processListResponse(response, 'Error al obtener notas del usuario en la materia');
+    } catch (e) {
+      throw Exception('Error al cargar notas del usuario: ${e.toString()}');
+    }
+  }
+
   /// Obtiene una nota específica por ID
   Future<Map<String, dynamic>> getNotaById(int notaId) async {
     try {

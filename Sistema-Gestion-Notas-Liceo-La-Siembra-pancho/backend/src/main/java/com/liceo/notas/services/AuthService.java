@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,40 +112,45 @@ public class AuthService {
      * @return {@link LoginResponse} con resultado del proceso de autenticación
      */
     public LoginResponse login(LoginRequest request) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdUsuario(request.getIdUsuario());
-        Usuario usuarioEmail = usuarioOpt.get();
-        // Validación básica de los campos de entrada
-        if (request.getIdUsuario() == null || request.getIdUsuario().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nickname es requerido");
+        // 1) Validar inputs
+        final String id = java.util.Optional.ofNullable(request.getIdUsuario())
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .orElseThrow(() -> new IllegalArgumentException("El usuario es requerido"));
+
+        final String rawPassword = java.util.Optional.ofNullable(request.getContrasena())
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .orElseThrow(() -> new IllegalArgumentException("La contraseña es requerida"));
+
+        // 2) Buscar usuario (sin get())
+        final Usuario usuario = usuarioRepository.findByIdUsuario(id)
+                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
+
+        // 3) Validar contraseña (si falla, no reveles si el usuario existe)
+        if (!passwordEncoder.matches(rawPassword, usuario.getContrasena())) {
+            throw new BadCredentialsException("Credenciales inválidas");
         }
-        if (request.getContrasena() == null || request.getContrasena().trim().isEmpty()) {
-            throw new IllegalArgumentException("La contraseña es requerida");
-        }
-        // 2.Verificar si el email ya está verificado
-        if (!usuarioEmail.isEmailVerificado()) {
-            throw new RuntimeException("verifique su correo para poder iniciar sesión");
-        }
-        // Buscar usuario en la base de datos
-        Usuario usuario = usuarioRepository.findByIdUsuario(request.getIdUsuario().trim())
-                .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
-        // Verificar estado del usuario
+
+        // 4) Estado de la cuenta
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
-            throw new RuntimeException("El usuario no está activo");
+            // Puedes usar DisabledException para mapear a 403/423 según tu handler
+            throw new DisabledException("La cuenta del usuario no está activa");
         }
+
+        // 5) Email verificado (se chequea después de validar contraseña para evitar enumeración)
         if (!usuario.isEmailVerificado()) {
-            throw new RuntimeException("Por favor verifica tu email primero");
+            // 401/403 según tu política
+            throw new InsufficientAuthenticationException("Verifica tu correo para poder iniciar sesión");
         }
-        // Verificar contraseña (ya está implementado correctamente)
-        if (!passwordEncoder.matches(request.getContrasena().trim(), usuario.getContrasena())) {
-            throw new RuntimeException("Credenciales inválidas");
-        }
-        // Procesar MFA si está habilitado
-        if (usuario.getMfaHabilitado() != null && usuario.getMfaHabilitado()) {
+
+        // 6) MFA (si aplica)
+        if (Boolean.TRUE.equals(usuario.getMfaHabilitado())) {
             return processMfaLogin(usuario);
         }
 
-        // Generar token JWT
-        String token = generateJwtToken(usuario);
+        // 7) Generar JWT y responder
+        final String token = generateJwtToken(usuario);
         return new LoginResponse(true, "Autenticación exitosa", token);
     }
 
